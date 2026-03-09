@@ -21,11 +21,11 @@ interface ToolOverlayProps {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  architect: '#7ec8e3',
-  builder: '#a8d8a8',
-  reviewer: '#c8a8e8',
-  tester: '#e8c87e',
-  documenter: '#8ee8d8',
+  architect: '#64D2FF',
+  builder: '#30D158',
+  reviewer: '#BF5AF2',
+  tester: '#FFD60A',
+  documenter: '#5AC8FA',
 };
 
 /** Derive a short human-readable activity string from tools/status */
@@ -128,9 +128,9 @@ export function ToolOverlay({
 
         let dotColor: string | null = null;
         if (hasPermission) {
-          dotColor = 'var(--pixel-status-permission)';
+          dotColor = 'var(--status-permission)';
         } else if (isActive && hasActiveTools) {
-          dotColor = 'var(--pixel-status-active)';
+          dotColor = 'var(--status-active)';
         }
 
         const info = agentInfos[id];
@@ -152,7 +152,7 @@ export function ToolOverlay({
               flexDirection: 'column',
               alignItems: 'center',
               pointerEvents: isSelected ? 'auto' : 'none',
-              zIndex: isSelected ? 'var(--pixel-overlay-selected-z)' : 'var(--pixel-overlay-z)',
+              zIndex: isSelected ? 'var(--z-overlay-selected)' : 'var(--z-overlay)',
             }}
           >
             <div
@@ -160,13 +160,15 @@ export function ToolOverlay({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                background: 'var(--pixel-bg)',
+                background: 'var(--glass-bg)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
                 border: isSelected
-                  ? '2px solid var(--pixel-border-light)'
-                  : '2px solid var(--pixel-border)',
-                borderRadius: 4,
+                  ? '1px solid var(--border-hover)'
+                  : '1px solid var(--glass-border)',
+                borderRadius: 'var(--radius-md)',
                 padding: isSelected ? '6px 8px 6px 10px' : '6px 10px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.4), var(--pixel-shadow)',
+                boxShadow: 'var(--shadow-md)',
                 whiteSpace: 'nowrap',
                 maxWidth: 280,
               }}
@@ -184,17 +186,16 @@ export function ToolOverlay({
                 />
               )}
               {isStuck && (
-                <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--pixel-font)', color: '#e8c87e', flexShrink: 0 }} title="Agent may be stuck">
+                <span style={{ fontSize: 'var(--text-sm)', color: '#FFD60A', flexShrink: 0 }} title="Agent may be stuck">
                   Stuck?
                 </span>
               )}
               <div style={{ overflow: 'hidden' }}>
                 <span
                   style={{
-                    fontSize: isSub ? 'var(--pxfont-sm)' : 'var(--pxfont-base)',
-                    fontFamily: 'var(--system-font)',
+                    fontSize: isSub ? 'var(--text-sm)' : 'var(--text-base)',
                     fontStyle: isSub ? 'italic' : undefined,
-                    color: 'var(--pixel-text)',
+                    color: 'var(--text-primary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     display: 'block',
@@ -207,8 +208,7 @@ export function ToolOverlay({
                   <span
                     style={{
                       fontSize: 'var(--text-base)',
-                      fontFamily: 'var(--system-font)',
-                      color: 'var(--pixel-text-dim)',
+                      color: 'var(--text-secondary)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       display: 'block',
@@ -225,8 +225,7 @@ export function ToolOverlay({
                     <span
                       style={{
                         fontSize: 'var(--text-lg)',
-                        fontFamily: 'var(--system-font)',
-                        color: 'var(--pixel-text-dim)',
+                        color: 'var(--text-secondary)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                       }}
@@ -236,13 +235,13 @@ export function ToolOverlay({
                     {role && roleColor && (
                       <span
                         style={{
-                          fontSize: 'var(--text-xs)',
-                          fontFamily: 'var(--pixel-font)',
+                          fontSize: 11,
+                          fontWeight: 500,
                           color: roleColor,
                           background: `${roleColor}18`,
                           border: `1px solid ${roleColor}`,
                           padding: '1px 6px',
-                          borderRadius: 8,
+                          borderRadius: 12,
                           textTransform: 'uppercase',
                           lineHeight: '16px',
                           flexShrink: 0,
@@ -257,8 +256,7 @@ export function ToolOverlay({
                       <span
                         style={{
                           fontSize: 'var(--text-sm)',
-                          fontFamily: 'var(--system-font)',
-                          color: '#c8a8e8',
+                          color: '#BF5AF2',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -274,8 +272,7 @@ export function ToolOverlay({
                   <span
                     style={{
                       fontSize: 'var(--text-base)',
-                      fontFamily: 'var(--system-font)',
-                      color: 'var(--pixel-text-dim)',
+                      color: 'var(--text-secondary)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       display: 'block',
@@ -295,21 +292,20 @@ export function ToolOverlay({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--pixel-close-text)',
+                    color: 'var(--text-tertiary)',
                     cursor: 'pointer',
                     padding: '4px 6px',
-                    fontSize: 'var(--pxfont-base)',
-                    fontFamily: 'var(--system-font)',
+                    fontSize: 'var(--text-base)',
                     lineHeight: 1,
                     marginLeft: 2,
                     flexShrink: 0,
                     minHeight: 32,
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = 'var(--pixel-close-hover)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--red)';
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = 'var(--pixel-close-text)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)';
                   }}
                 >
                   ×

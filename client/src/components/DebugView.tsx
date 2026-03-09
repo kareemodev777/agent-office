@@ -24,8 +24,8 @@ function ToolDot({ tool }: { tool: ToolActivity }) {
         background: tool.done
           ? '#89d185'
           : tool.permissionWait
-            ? 'var(--pixel-status-permission)'
-            : 'var(--pixel-status-active)',
+            ? 'var(--status-permission)'
+            : 'var(--status-active)',
         display: 'inline-block',
         flexShrink: 0,
       }}
@@ -37,7 +37,7 @@ function ToolLine({ tool }: { tool: ToolActivity }) {
   return (
     <span
       style={{
-        fontSize: 'var(--pxfont-sm)',
+        fontSize: 'var(--text-sm)',
         opacity: tool.done ? 0.5 : 0.8,
         display: 'flex',
         alignItems: 'center',
@@ -68,8 +68,8 @@ export function DebugView({
       <div
         key={id}
         style={{
-          border: `2px solid ${isSelected ? '#5a8cff' : '#4a4a6a'}`,
-          borderRadius: 0,
+          border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+          borderRadius: 'var(--radius-md)',
           padding: '6px 8px',
           background: isSelected
             ? 'rgba(255,255,255,0.04)'
@@ -80,9 +80,9 @@ export function DebugView({
           <button
             onClick={() => onSelectAgent(id)}
             style={{
-              borderRadius: 0,
+              borderRadius: 'var(--radius-sm)',
               padding: '6px 10px',
-              fontSize: 'var(--pxfont-base)',
+              fontSize: 'var(--text-base)',
               background: isSelected ? 'rgba(90, 140, 255, 0.25)' : undefined,
               color: isSelected ? '#fff' : undefined,
               fontWeight: isSelected ? 'bold' : undefined,
@@ -93,9 +93,9 @@ export function DebugView({
           <button
             onClick={() => transport.postMessage({ type: 'closeAgent', id })}
             style={{
-              borderRadius: 0,
+              borderRadius: 'var(--radius-sm)',
               padding: '6px 8px',
-              fontSize: 'var(--pxfont-base)',
+              fontSize: 'var(--text-base)',
               opacity: 0.7,
               background: isSelected ? 'rgba(90, 140, 255, 0.25)' : undefined,
               color: isSelected ? '#fff' : undefined,
@@ -140,7 +140,7 @@ export function DebugView({
             {status === 'waiting' && !hasActiveTools && (
               <span
                 style={{
-                  fontSize: 'var(--pxfont-sm)',
+                  fontSize: 'var(--text-sm)',
                   opacity: 0.85,
                   display: 'flex',
                   alignItems: 'center',
@@ -152,7 +152,7 @@ export function DebugView({
                     width: 6,
                     height: 6,
                     borderRadius: '50%',
-                    background: 'var(--pixel-status-permission)',
+                    background: 'var(--status-permission)',
                     display: 'inline-block',
                     flexShrink: 0,
                   }}
@@ -174,13 +174,13 @@ export function DebugView({
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'var(--pixel-bg)',
+        background: 'var(--bg)',
         zIndex: DEBUG_Z,
         overflow: 'auto',
       }}
     >
       {/* Top padding so cards don't overlap the floating toolbar */}
-      <div style={{ padding: '12px 12px 12px', fontSize: 'var(--pxfont-lg)' }}>
+      <div style={{ padding: '12px 12px 12px', fontSize: 'var(--text-lg)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {agents.map(renderAgentCard)}
         </div>

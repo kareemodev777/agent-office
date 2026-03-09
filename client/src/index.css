@@ -1,109 +1,101 @@
-@font-face {
-  font-family: 'FS Pixel Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('./fonts/FSPixelSansUnicode-Regular.ttf') format('truetype');
-}
-
 :root {
-  /* Font stacks */
-  --pixel-font: 'FS Pixel Sans', monospace;
-  --system-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+  --font-mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Size scale — system font */
+  /* Font sizes */
+  --text-caption: 11px;
   --text-xs: 13px;
-  --text-sm: 14px;
+  --text-sm: 13px;
   --text-base: 15px;
   --text-lg: 17px;
   --text-xl: 20px;
   --text-2xl: 24px;
-  --text-3xl: 28px;
 
-  /* Size scale — pixel font (renders smaller, needs bigger values) */
-  --pxfont-sm: 20px;
-  --pxfont-base: 22px;
-  --pxfont-lg: 26px;
-  --pxfont-xl: 30px;
-  --pxfont-2xl: 34px;
+  /* Font weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
 
-  --pixel-bg: #1e1e2e;
-  --pixel-border: #4a4a6a;
-  --pixel-border-light: #6a6a8a;
-  --pixel-accent: #5a8cff;
-  --pixel-green: #5ac88c;
-  --pixel-shadow: 2px 2px 0px #0a0a14;
+  /* Dark theme (default) */
+  --bg: #0f0f11;
+  --surface: #1a1a1e;
+  --surface-elevated: #222226;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.55);
+  --text-tertiary: rgba(255, 255, 255, 0.35);
 
-  /* Button base */
-  --pixel-text: rgba(255, 255, 255, 0.8);
-  --pixel-text-dim: rgba(255, 255, 255, 0.7);
-  --pixel-btn-bg: rgba(255, 255, 255, 0.08);
-  --pixel-btn-hover-bg: rgba(255, 255, 255, 0.15);
-  --pixel-btn-disabled-opacity: 0.35;
+  /* Accent colors */
+  --accent: #0A84FF;
+  --green: #30D158;
+  --yellow: #FFD60A;
+  --red: #FF453A;
+  --purple: #BF5AF2;
+  --orange: #FF9F0A;
 
-  /* Active/selected button state */
-  --pixel-active-bg: rgba(90, 140, 255, 0.25);
+  /* Derived */
+  --btn-bg: rgba(255, 255, 255, 0.06);
+  --btn-hover: rgba(255, 255, 255, 0.10);
+  --btn-active: rgba(10, 132, 255, 0.18);
+  --btn-disabled-opacity: 0.35;
 
-  /* Agent button */
-  --pixel-agent-bg: rgba(90, 200, 140, 0.15);
-  --pixel-agent-hover-bg: rgba(90, 200, 140, 0.3);
-  --pixel-agent-border: #5ac88c;
-  --pixel-agent-text: rgba(200, 255, 220, 0.95);
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.24), 0 4px 8px rgba(0, 0, 0, 0.12);
 
-  /* Close button */
-  --pixel-close-text: rgba(255, 255, 255, 0.5);
-  --pixel-close-hover: #e55;
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 
-  /* Hints & confirmations */
-  --pixel-hint-bg: #3278c8;
-  --pixel-reset-text: #ecc;
-  --pixel-danger-bg: #a33;
+  /* Glass effect */
+  --glass-bg: rgba(26, 26, 30, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.08);
 
-  /* Vignette */
-  --pixel-vignette: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.6) 100%);
+  /* Status */
+  --status-permission: #FFD60A;
+  --status-active: #0A84FF;
 
-  /* Status dot colors (standalone, no VS Code vars) */
-  --pixel-status-permission: #cca700;
-  --pixel-status-active: #3794ff;
+  /* Z-index */
+  --z-overlay: 100;
+  --z-overlay-selected: 110;
+  --z-controls: 50;
 
-  /* ToolOverlay z-index layers */
-  --pixel-overlay-z: 100;
-  --pixel-overlay-selected-z: 110;
-  --pixel-controls-z: 50;
+  /* Role colors */
+  --role-architect: #64D2FF;
+  --role-builder: #30D158;
+  --role-reviewer: #BF5AF2;
+  --role-tester: #FFD60A;
+  --role-documenter: #5AC8FA;
 }
 
 /* Light theme overrides */
 body.theme-light {
-  --pixel-bg: #e8e4de;
-  --pixel-border: #b0a898;
-  --pixel-border-light: #908878;
-  --pixel-accent: #3a6cd8;
-  --pixel-green: #3a9060;
-  --pixel-shadow: 2px 2px 0px rgba(0, 0, 0, 0.15);
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-elevated: #f0f0f2;
+  --border: rgba(0, 0, 0, 0.06);
+  --border-hover: rgba(0, 0, 0, 0.12);
+  --text-primary: rgba(0, 0, 0, 0.88);
+  --text-secondary: rgba(0, 0, 0, 0.50);
+  --text-tertiary: rgba(0, 0, 0, 0.30);
 
-  --pixel-text: rgba(30, 30, 40, 0.9);
-  --pixel-text-dim: rgba(30, 30, 40, 0.65);
-  --pixel-btn-bg: rgba(0, 0, 0, 0.06);
-  --pixel-btn-hover-bg: rgba(0, 0, 0, 0.12);
+  --btn-bg: rgba(0, 0, 0, 0.04);
+  --btn-hover: rgba(0, 0, 0, 0.08);
+  --btn-active: rgba(10, 132, 255, 0.12);
 
-  --pixel-active-bg: rgba(58, 108, 216, 0.2);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(0, 0, 0, 0.06);
 
-  --pixel-agent-bg: rgba(58, 144, 96, 0.12);
-  --pixel-agent-hover-bg: rgba(58, 144, 96, 0.25);
-  --pixel-agent-border: #3a9060;
-  --pixel-agent-text: rgba(20, 80, 50, 0.95);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
 
-  --pixel-close-text: rgba(0, 0, 0, 0.4);
-  --pixel-close-hover: #c33;
-
-  --pixel-hint-bg: #4a88d8;
-  --pixel-reset-text: #a44;
-  --pixel-danger-bg: #c44;
-
-  --pixel-vignette: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.1) 100%);
-
-  --pixel-status-permission: #b89400;
-  --pixel-status-active: #2a74e8;
+  --status-permission: #b89400;
+  --status-active: #007AFF;
 }
 
 html,
@@ -113,15 +105,44 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: 'FS Pixel Sans', sans-serif;
-  background: #0a0a14;
-}
-
-body.theme-light,
-body.theme-light #root {
-  background: #d0ccc4;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
-  font-family: 'FS Pixel Sans', sans-serif;
+  font-family: var(--font-sans);
+  box-sizing: border-box;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+body.theme-light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Transitions */
+button, input, textarea {
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }

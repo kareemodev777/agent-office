@@ -14,18 +14,18 @@ interface ZoomControlsProps {
 }
 
 const btnBase: React.CSSProperties = {
-  width: 40,
-  height: 40,
+  width: 32,
+  height: 32,
   padding: 0,
-  background: 'var(--pixel-bg)',
-  color: 'var(--pixel-text)',
-  border: '2px solid var(--pixel-border)',
-  borderRadius: 0,
+  background: 'var(--surface)',
+  color: 'var(--text-primary)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-sm)',
   cursor: 'pointer',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  boxShadow: 'var(--pixel-shadow)',
+  boxShadow: 'var(--shadow-sm)',
 };
 
 export function ZoomControls({ zoom, onZoomChange }: ZoomControlsProps) {
@@ -78,14 +78,14 @@ export function ZoomControls({ zoom, onZoomChange }: ZoomControlsProps) {
             top: 10,
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 'var(--pixel-controls-z)',
-            background: 'var(--pixel-bg)',
-            border: '2px solid var(--pixel-border)',
-            borderRadius: 0,
+            zIndex: 'var(--z-controls)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
             padding: '4px 12px',
-            boxShadow: 'var(--pixel-shadow)',
-            fontSize: '26px',
-            color: 'var(--pixel-text)',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 500,
+            color: 'var(--text-primary)',
             userSelect: 'none',
             opacity: fadeOut ? 0 : 1,
             transition: `opacity ${ZOOM_LEVEL_FADE_DURATION_SEC}s ease-out`,
@@ -102,7 +102,7 @@ export function ZoomControls({ zoom, onZoomChange }: ZoomControlsProps) {
           position: 'absolute',
           top: 8,
           left: 8,
-          zIndex: 'var(--pixel-controls-z)',
+          zIndex: 'var(--z-controls)',
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
@@ -116,20 +116,20 @@ export function ZoomControls({ zoom, onZoomChange }: ZoomControlsProps) {
           style={{
             ...btnBase,
             background:
-              hovered === 'plus' && !maxDisabled ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+              hovered === 'plus' && !maxDisabled ? 'var(--btn-hover)' : btnBase.background,
             cursor: maxDisabled ? 'default' : 'pointer',
-            opacity: maxDisabled ? 'var(--pixel-btn-disabled-opacity)' : 1,
+            opacity: maxDisabled ? 0.4 : 1,
           }}
           title="Zoom in (Ctrl+Scroll)"
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
             <line
               x1="9"
               y1="3"
               x2="9"
               y2="15"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.5"
               strokeLinecap="round"
             />
             <line
@@ -138,7 +138,7 @@ export function ZoomControls({ zoom, onZoomChange }: ZoomControlsProps) {
               x2="15"
               y2="9"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.5"
               strokeLinecap="round"
             />
           </svg>
@@ -152,21 +152,21 @@ export function ZoomControls({ zoom, onZoomChange }: ZoomControlsProps) {
             ...btnBase,
             background:
               hovered === 'minus' && !minDisabled
-                ? 'var(--pixel-btn-hover-bg)'
+                ? 'var(--btn-hover)'
                 : btnBase.background,
             cursor: minDisabled ? 'default' : 'pointer',
-            opacity: minDisabled ? 'var(--pixel-btn-disabled-opacity)' : 1,
+            opacity: minDisabled ? 0.4 : 1,
           }}
           title="Zoom out (Ctrl+Scroll)"
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
             <line
               x1="3"
               y1="9"
               x2="15"
               y2="9"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.5"
               strokeLinecap="round"
             />
           </svg>

@@ -19,35 +19,37 @@ interface BottomToolbarProps {
 
 const panelStyle: React.CSSProperties = {
   position: 'absolute',
-  bottom: 10,
-  left: 10,
-  zIndex: 'var(--pixel-controls-z)',
+  bottom: 12,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 'var(--z-controls)',
   display: 'flex',
   alignItems: 'center',
-  gap: 6,
-  background: 'var(--pixel-bg)',
-  border: '2px solid var(--pixel-border)',
-  borderRadius: 0,
-  padding: '6px 8px',
-  boxShadow: 'var(--pixel-shadow)',
+  gap: 4,
+  background: 'var(--glass-bg)',
+  backdropFilter: 'blur(20px)',
+  WebkitBackdropFilter: 'blur(20px)',
+  border: '1px solid var(--glass-border)',
+  borderRadius: 20,
+  padding: '4px 6px',
+  boxShadow: 'var(--shadow-md)',
 };
 
 const btnBase: React.CSSProperties = {
-  padding: '8px 16px',
-  fontSize: 'var(--pxfont-sm)',
-  fontFamily: 'var(--pixel-font)',
-  color: 'var(--pixel-text)',
-  background: 'var(--pixel-btn-bg)',
-  border: '2px solid transparent',
-  borderRadius: 0,
+  padding: '6px 14px',
+  fontSize: 'var(--text-sm)',
+  fontWeight: 500,
+  color: 'var(--text-secondary)',
+  background: 'var(--btn-bg)',
+  border: 'none',
+  borderRadius: 16,
   cursor: 'pointer',
-  minHeight: 36,
 };
 
 const btnActive: React.CSSProperties = {
   ...btnBase,
-  background: 'var(--pixel-active-bg)',
-  border: '2px solid var(--pixel-accent)',
+  background: 'var(--btn-active)',
+  color: 'var(--accent)',
 };
 
 export function BottomToolbar({
@@ -104,13 +106,12 @@ export function BottomToolbar({
           onMouseLeave={() => setHovered(null)}
           style={{
             ...btnBase,
-            padding: '5px 12px',
             background:
               hovered === 'agent' || isFolderPickerOpen
-                ? 'var(--pixel-agent-hover-bg)'
-                : 'var(--pixel-agent-bg)',
-            border: '2px solid var(--pixel-agent-border)',
-            color: 'var(--pixel-agent-text)',
+                ? 'rgba(48, 209, 88, 0.2)'
+                : 'rgba(48, 209, 88, 0.12)',
+            border: '1px solid rgba(48, 209, 88, 0.3)',
+            color: '#30D158',
           }}
         >
           + Agent
@@ -122,12 +123,12 @@ export function BottomToolbar({
               bottom: '100%',
               left: 0,
               marginBottom: 4,
-              background: 'var(--pixel-bg)',
-              border: '2px solid var(--pixel-border)',
-              borderRadius: 0,
-              boxShadow: 'var(--pixel-shadow)',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-md)',
               minWidth: 160,
-              zIndex: 'var(--pixel-controls-z)',
+              zIndex: 'var(--z-controls)',
             }}
           >
             {workspaceFolders.map((folder, i) => (
@@ -141,12 +142,11 @@ export function BottomToolbar({
                   width: '100%',
                   textAlign: 'left',
                   padding: '8px 14px',
-                  fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--pixel-font)',
-                  color: 'var(--pixel-text)',
-                  background: hoveredFolder === i ? 'var(--pixel-btn-hover-bg)' : 'transparent',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--text-primary)',
+                  background: hoveredFolder === i ? 'var(--btn-hover)' : 'transparent',
                   border: 'none',
-                  borderRadius: 0,
+                  borderRadius: 'var(--radius-md)',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
@@ -164,7 +164,7 @@ export function BottomToolbar({
           onMouseLeave={() => setHovered(null)}
           style={{
             ...btnBase,
-            background: hovered === 'spawn' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+            background: hovered === 'spawn' ? 'var(--btn-hover)' : btnBase.background,
           }}
           title="Spawn a new agent with a prompt"
         >
@@ -178,7 +178,7 @@ export function BottomToolbar({
           onMouseLeave={() => setHovered(null)}
           style={{
             ...btnBase,
-            background: hovered === 'widget' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+            background: hovered === 'widget' ? 'var(--btn-hover)' : btnBase.background,
           }}
           title="Compact widget mode (W)"
         >
@@ -194,7 +194,7 @@ export function BottomToolbar({
             ? { ...btnActive }
             : {
                 ...btnBase,
-                background: hovered === 'edit' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+                background: hovered === 'edit' ? 'var(--btn-hover)' : btnBase.background,
               }
         }
         title="Edit office layout"
@@ -208,7 +208,7 @@ export function BottomToolbar({
           onMouseLeave={() => setHovered(null)}
           style={{
             ...btnBase,
-            background: hovered === 'history' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+            background: hovered === 'history' ? 'var(--btn-hover)' : btnBase.background,
           }}
           title="Session history"
         >
@@ -226,7 +226,7 @@ export function BottomToolbar({
               : {
                   ...btnBase,
                   background:
-                    hovered === 'settings' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+                    hovered === 'settings' ? 'var(--btn-hover)' : btnBase.background,
                 }
           }
           title="Settings"
@@ -247,9 +247,7 @@ export function BottomToolbar({
           onMouseLeave={() => setHovered(null)}
           style={{
             ...btnBase,
-            fontSize: 'var(--text-base)',
-            padding: '8px 14px',
-            background: hovered === 'shortcuts' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+            background: hovered === 'shortcuts' ? 'var(--btn-hover)' : btnBase.background,
           }}
           title="Keyboard shortcuts (?)"
         >

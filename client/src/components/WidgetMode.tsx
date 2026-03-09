@@ -14,11 +14,11 @@ interface WidgetModeProps {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  architect: '#7ec8e3',
-  builder: '#a8d8a8',
-  reviewer: '#c8a8e8',
-  tester: '#e8c87e',
-  documenter: '#8ee8d8',
+  architect: '#64D2FF',
+  builder: '#30D158',
+  reviewer: '#BF5AF2',
+  tester: '#FFD60A',
+  documenter: '#5AC8FA',
 };
 
 function formatDuration(startedAt: number): string {
@@ -61,7 +61,7 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
       style={{
         width: '100%',
         height: '100%',
-        background: 'var(--pixel-bg)',
+        background: 'var(--bg)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -74,23 +74,23 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '8px 12px',
-          borderBottom: '2px solid var(--pixel-border)',
+          borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)' }}>
+        <span style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--text-primary)' }}>
           Agent Office
         </span>
         <button
           onClick={onExit}
           style={{
-            background: 'var(--pixel-btn-bg)',
-            border: '1px solid var(--pixel-border)',
-            color: 'var(--pixel-text)',
+            background: 'var(--btn-bg)',
+            border: '1px solid var(--border)',
+            color: 'var(--text-primary)',
             cursor: 'pointer',
             padding: '6px 14px',
             fontSize: 'var(--text-base)',
-            fontFamily: 'var(--pixel-font)',
+            borderRadius: 'var(--radius-sm)',
             minHeight: 32,
           }}
         >
@@ -101,7 +101,7 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
       {/* Agent list */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {agents.length === 0 && (
-          <div style={{ padding: 16, textAlign: 'center', fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ padding: 16, textAlign: 'center', fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>
             No agents running
           </div>
         )}
@@ -112,7 +112,7 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
           const currentTool = getCurrentTool(tools);
           const cost = calculateCost(info);
           const role = info.role;
-          const dotColor = (role && ROLE_COLORS[role]) || '#5a8cff';
+          const dotColor = (role && ROLE_COLORS[role]) || '#0A84FF';
           const isExpanded = expandedId === id;
           const totalTokens = info.inputTokens + info.outputTokens;
 
@@ -126,9 +126,9 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
                   width: '100%',
                   gap: 8,
                   padding: '6px 12px',
-                  background: isExpanded ? 'var(--pixel-btn-hover-bg)' : 'transparent',
+                  background: isExpanded ? 'var(--btn-hover)' : 'transparent',
                   border: 'none',
-                  borderBottom: '1px solid var(--pixel-border)',
+                  borderBottom: '1px solid var(--border)',
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
@@ -144,18 +144,18 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
                   }}
                 />
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <div style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 'var(--text-lg)', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {info.slug || info.label}
                   </div>
-                  <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {currentTool}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+                  <div style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>
                     {formatDuration(info.startedAt)}
                   </div>
-                  <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: '#c8a8e8' }}>
+                  <div style={{ fontSize: 'var(--text-base)', color: '#BF5AF2' }}>
                     ${cost.toFixed(2)}
                   </div>
                 </div>
@@ -164,12 +164,12 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
                 <div
                   style={{
                     padding: '6px 12px 6px 28px',
-                    borderBottom: '1px solid var(--pixel-border)',
-                    background: 'var(--pixel-btn-bg)',
+                    borderBottom: '1px solid var(--border)',
+                    background: 'var(--surface-elevated)',
                   }}
                 >
-                  <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    {role && <span style={{ color: ROLE_COLORS[role] || 'var(--pixel-accent)', textTransform: 'uppercase' }}>{role}</span>}
+                  <div style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    {role && <span style={{ color: ROLE_COLORS[role] || 'var(--accent)', textTransform: 'uppercase' }}>{role}</span>}
                     {info.gitBranch && <span>branch: {info.gitBranch}</span>}
                     <span>tokens: {formatTokens(totalTokens)}</span>
                   </div>
@@ -177,13 +177,13 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
                     onClick={(e) => { e.stopPropagation(); onInspect(id); }}
                     style={{
                       marginTop: 4,
-                      background: 'var(--pixel-btn-bg)',
-                      border: '1px solid var(--pixel-border)',
-                      color: 'var(--pixel-accent)',
+                      background: 'var(--btn-bg)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--accent)',
                       cursor: 'pointer',
                       padding: '6px 12px',
                       fontSize: 'var(--text-sm)',
-                      fontFamily: 'var(--pixel-font)',
+                      borderRadius: 'var(--radius-sm)',
                       minHeight: 32,
                     }}
                   >
@@ -200,17 +200,17 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
       <div
         style={{
           padding: '8px 12px',
-          borderTop: '2px solid var(--pixel-border)',
+          borderTop: '1px solid var(--border)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+        <span style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>
           {agents.length} agent{agents.length !== 1 ? 's' : ''} running
         </span>
-        <span style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--system-font)', color: '#c8a8e8' }}>
+        <span style={{ fontSize: 'var(--text-lg)', color: '#BF5AF2' }}>
           Total: ~${totalCost.toFixed(2)}
         </span>
       </div>

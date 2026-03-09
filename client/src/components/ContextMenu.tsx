@@ -34,11 +34,12 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
         left: x,
         top: y,
         zIndex: 200,
-        background: 'var(--pixel-bg)',
-        border: '2px solid var(--pixel-border)',
-        boxShadow: 'var(--pixel-shadow)',
-        minWidth: 160,
-        borderRadius: 4,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-md)',
+        minWidth: 180,
+        overflow: 'hidden',
       }}
     >
       {items.map((item, i) => (
@@ -52,17 +53,15 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
             display: 'block',
             width: '100%',
             textAlign: 'left',
-            padding: '10px 14px',
-            fontSize: 'var(--text-base)',
-            fontFamily: 'var(--system-font)',
-            minHeight: 36,
-            color: item.danger ? '#e85050' : 'var(--pixel-text)',
+            padding: '8px 14px',
+            fontSize: 'var(--text-sm)',
+            color: item.danger ? '#FF453A' : 'var(--text-primary)',
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = 'var(--pixel-btn-hover-bg)';
+            (e.currentTarget as HTMLElement).style.background = 'var(--btn-hover)';
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.background = 'transparent';

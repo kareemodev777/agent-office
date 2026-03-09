@@ -19,11 +19,11 @@ const MINIMAP_H = 80;
 const DOT_SIZE = 4;
 
 const ROLE_COLORS: Record<string, string> = {
-  architect: '#7ec8e3',
-  builder: '#a8d8a8',
-  reviewer: '#c8a8e8',
-  tester: '#e8c87e',
-  documenter: '#8ee8d8',
+  architect: '#64D2FF',
+  builder: '#30D158',
+  reviewer: '#BF5AF2',
+  tester: '#FFD60A',
+  documenter: '#5AC8FA',
 };
 
 export function Minimap({
@@ -55,7 +55,7 @@ export function Minimap({
       ctx.clearRect(0, 0, MINIMAP_W, MINIMAP_H);
 
       // Background
-      ctx.fillStyle = 'rgba(30, 30, 46, 0.85)';
+      ctx.fillStyle = 'rgba(15, 15, 17, 0.85)';
       ctx.fillRect(0, 0, MINIMAP_W, MINIMAP_H);
 
       // Draw floor tiles as colored area
@@ -77,7 +77,7 @@ export function Minimap({
         if (!ch) continue;
         const info = agentInfos[id];
         const role = info?.role;
-        const color = (role && ROLE_COLORS[role]) || '#5a8cff';
+        const color = (role && ROLE_COLORS[role]) || '#0A84FF';
 
         const x = ch.x * scale;
         const y = ch.y * scale;
@@ -163,9 +163,11 @@ export function Minimap({
         position: 'absolute',
         bottom: 50,
         right: 10,
-        zIndex: 'var(--pixel-controls-z)',
-        border: '2px solid var(--pixel-border)',
-        boxShadow: 'var(--pixel-shadow)',
+        zIndex: 'var(--z-controls)',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-sm)',
+        overflow: 'hidden',
         cursor: 'pointer',
       }}
     >

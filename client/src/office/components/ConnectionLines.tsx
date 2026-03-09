@@ -5,11 +5,11 @@ import type { OfficeState } from '../engine/officeState.js';
 import { CharacterState, TILE_SIZE } from '../types.js';
 
 const ROLE_COLORS: Record<string, string> = {
-  architect: '#7ec8e3',
-  builder: '#a8d8a8',
-  reviewer: '#c8a8e8',
-  tester: '#e8c87e',
-  documenter: '#8ee8d8',
+  architect: '#64D2FF',
+  builder: '#30D158',
+  reviewer: '#BF5AF2',
+  tester: '#FFD60A',
+  documenter: '#5AC8FA',
 };
 
 interface ConnectionLinesProps {
@@ -74,7 +74,7 @@ export function ConnectionLines({
 
     const parentInfo = agentInfos[meta.parentAgentId];
     const role = parentInfo?.role;
-    const color = (role && ROLE_COLORS[role]) || '#5a8cff';
+    const color = (role && ROLE_COLORS[role]) || '#0A84FF';
 
     lines.push({ x1, y1, x2, y2, color });
   }

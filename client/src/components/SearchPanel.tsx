@@ -70,7 +70,7 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
     return (
       <>
         {text.slice(0, idx)}
-        <span style={{ background: 'rgba(90, 140, 255, 0.3)', color: '#fff' }}>
+        <span style={{ background: 'rgba(10, 132, 255, 0.25)', color: '#fff' }}>
           {text.slice(idx, idx + q.length)}
         </span>
         {text.slice(idx + q.length)}
@@ -94,9 +94,9 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
         right: 0,
         maxHeight: '50%',
         zIndex: 200,
-        background: 'var(--pixel-bg)',
-        borderBottom: '2px solid var(--pixel-border)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+        background: 'var(--surface)',
+        borderBottom: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-md)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -107,13 +107,13 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          padding: '8px 12px',
-          gap: 8,
-          borderBottom: '1px solid var(--pixel-border)',
+          padding: '10px 14px',
+          gap: 10,
+          borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text-dim)' }}>Search:</span>
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', fontWeight: 500 }}>Search</span>
         <input
           ref={inputRef}
           type="text"
@@ -123,12 +123,12 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
           placeholder="Search transcripts..."
           style={{
             flex: 1,
-            background: 'var(--pixel-btn-bg)',
-            border: '1px solid var(--pixel-border)',
-            color: 'var(--pixel-text)',
+            background: 'var(--btn-bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--text-primary)',
             padding: '8px 12px',
-            fontSize: 'var(--text-base)',
-            fontFamily: 'var(--system-font)',
+            fontSize: 'var(--text-sm)',
             outline: 'none',
             minHeight: 36,
           }}
@@ -138,9 +138,8 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--pixel-text-dim)',
+            color: 'var(--text-secondary)',
             fontSize: 'var(--text-xl)',
-            fontFamily: 'var(--system-font)',
             cursor: 'pointer',
             padding: '4px 8px',
             minHeight: 32,
@@ -153,13 +152,13 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
       {/* Results */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
         {searching && (
-          <div style={{ padding: 12, fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', textAlign: 'center' }}>
+          <div style={{ padding: 12, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', textAlign: 'center' }}>
             Searching...
           </div>
         )}
 
         {!searching && query.trim().length >= 2 && results.length === 0 && (
-          <div style={{ padding: 12, fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', textAlign: 'center' }}>
+          <div style={{ padding: 12, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', textAlign: 'center' }}>
             No results found
           </div>
         )}
@@ -170,12 +169,11 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
             <div key={agentId}>
               <div
                 style={{
-                  padding: '6px 14px',
-                  fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--pixel-font)',
-                  color: 'var(--pixel-accent)',
-                  fontWeight: 'bold',
-                  background: 'var(--pixel-btn-bg)',
+                  padding: '8px 14px',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 600,
+                  color: 'var(--accent)',
+                  background: 'var(--btn-bg)',
                 }}
               >
                 {group.name} ({group.items.length} match{group.items.length !== 1 ? 'es' : ''})
@@ -191,18 +189,17 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
                     padding: '8px 14px 8px 28px',
                     background: 'transparent',
                     border: 'none',
-                    borderBottom: '1px solid var(--pixel-border)',
+                    borderBottom: '1px solid var(--border)',
                     cursor: 'pointer',
-                    fontSize: 'var(--text-base)',
-                    fontFamily: 'var(--system-font)',
-                    color: 'var(--pixel-text)',
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--text-primary)',
                     minHeight: 36,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <span style={{ color: 'var(--pixel-text-dim)', marginRight: 6 }}>L{item.lineNumber}</span>
+                  <span style={{ color: 'var(--text-secondary)', marginRight: 6 }}>L{item.lineNumber}</span>
                   {highlightMatch(item.line, query)}
                 </button>
               ))}
@@ -211,7 +208,7 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
         })}
 
         {truncated && (
-          <div style={{ padding: 10, textAlign: 'center', fontSize: 'var(--text-sm)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ padding: 10, textAlign: 'center', fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
             Results truncated to 50 — refine your search
           </div>
         )}

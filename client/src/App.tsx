@@ -42,17 +42,17 @@ function getOfficeState(): OfficeState {
 
 const actionBarBtnStyle: React.CSSProperties = {
   padding: '4px 10px',
-  fontSize: '22px',
-  background: 'var(--pixel-btn-bg)',
-  color: 'var(--pixel-text-dim)',
-  border: '2px solid transparent',
-  borderRadius: 0,
+  fontSize: 'var(--text-lg)',
+  background: 'var(--btn-bg)',
+  color: 'var(--text-secondary)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-md)',
   cursor: 'pointer',
 };
 
 const actionBarBtnDisabled: React.CSSProperties = {
   ...actionBarBtnStyle,
-  opacity: 'var(--pixel-btn-disabled-opacity)',
+  opacity: 'var(--btn-disabled-opacity)',
   cursor: 'default',
 };
 
@@ -75,15 +75,15 @@ function EditActionBar({
         top: 8,
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 'var(--pixel-controls-z)',
+        zIndex: 'var(--z-controls)',
         display: 'flex',
         gap: 4,
         alignItems: 'center',
-        background: 'var(--pixel-bg)',
-        border: '2px solid var(--pixel-border)',
-        borderRadius: 0,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-md)',
         padding: '4px 8px',
-        boxShadow: 'var(--pixel-shadow)',
+        boxShadow: 'var(--shadow-md)',
       }}
     >
       <button
@@ -113,9 +113,9 @@ function EditActionBar({
         </button>
       ) : (
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          <span style={{ fontSize: '22px', color: 'var(--pixel-reset-text)' }}>Reset?</span>
+          <span style={{ fontSize: 'var(--text-lg)', color: 'var(--red)' }}>Reset?</span>
           <button
-            style={{ ...actionBarBtnStyle, background: 'var(--pixel-danger-bg)', color: '#fff' }}
+            style={{ ...actionBarBtnStyle, background: 'var(--red)', color: '#fff' }}
             onClick={() => {
               setShowResetConfirm(false);
               editor.handleReset();
@@ -394,17 +394,6 @@ function App() {
 
       <ZoomControls zoom={editor.zoom} onZoomChange={editor.handleZoomChange} />
 
-      {/* Vignette overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'var(--pixel-vignette)',
-          pointerEvents: 'none',
-          zIndex: 40,
-        }}
-      />
-
       {/* Top stats bar */}
       {!editor.isEditMode && (
         <TopBar
@@ -436,14 +425,17 @@ function App() {
           position: 'absolute',
           top: 8,
           right: 8,
-          zIndex: 'var(--pixel-controls-z)',
+          zIndex: 'var(--z-controls)',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          background: 'var(--pixel-bg)',
-          border: '2px solid var(--pixel-border)',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)',
           padding: '4px 8px',
-          boxShadow: 'var(--pixel-shadow)',
+          boxShadow: 'var(--shadow-sm)',
         }}
       >
         <div
@@ -451,11 +443,11 @@ function App() {
             width: 8,
             height: 8,
             borderRadius: '50%',
-            background: connected ? '#5ac88c' : '#666',
-            boxShadow: connected ? '0 0 6px #5ac88c' : 'none',
+            background: connected ? '#30D158' : '#666',
+            boxShadow: connected ? '0 0 6px #30D158' : 'none',
           }}
         />
-        <span style={{ fontSize: '18px', color: 'var(--pixel-text-dim)' }}>
+        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
           {connected ? 'Connected' : 'Reconnecting...'}
         </span>
       </div>
@@ -479,20 +471,22 @@ function App() {
           position: 'absolute',
           bottom: 10,
           right: 10,
-          zIndex: 'var(--pixel-controls-z)',
+          zIndex: 'var(--z-controls)',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          background: 'var(--pixel-bg)',
-          border: '2px solid var(--pixel-border)',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)',
           padding: '4px 10px',
-          boxShadow: 'var(--pixel-shadow)',
-          fontSize: 'var(--pxfont-sm)',
-          fontFamily: 'var(--pixel-font)',
-          color: 'var(--pixel-text-dim)',
+          boxShadow: 'var(--shadow-sm)',
+          fontSize: 'var(--text-sm)',
+          color: 'var(--text-secondary)',
         }}
       >
-        <span style={{ color: '#c8a8e8' }}>Total: ~${totalCost.toFixed(2)} today</span>
+        <span style={{ color: '#BF5AF2' }}>Total: ~${totalCost.toFixed(2)} today</span>
       </div>
 
       {/* Minimap */}
@@ -520,13 +514,13 @@ function App() {
             left: '50%',
             transform: editor.isDirty ? 'translateX(calc(-50% + 100px))' : 'translateX(-50%)',
             zIndex: 49,
-            background: 'var(--pixel-hint-bg)',
+            background: 'var(--accent)',
             color: '#fff',
-            fontSize: '20px',
+            fontSize: 'var(--text-base)',
             padding: '3px 8px',
-            borderRadius: 0,
-            border: '2px solid var(--pixel-accent)',
-            boxShadow: 'var(--pixel-shadow)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-sm)',
             pointerEvents: 'none',
             whiteSpace: 'nowrap',
           }}
@@ -646,18 +640,19 @@ function App() {
           <div
             className="empty-state-pulse"
             style={{
-              background: 'rgba(30, 30, 46, 0.85)',
-              border: '2px solid var(--pixel-border)',
-              boxShadow: 'var(--pixel-shadow)',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-md)',
+              boxShadow: 'var(--shadow-md)',
               padding: '16px 24px',
               textAlign: 'center',
               maxWidth: 380,
             }}
           >
-            <div style={{ fontSize: '28px', color: 'var(--pixel-text)', marginBottom: 8 }}>
+            <div style={{ fontSize: 'var(--text-xl)', color: 'var(--text-primary)', marginBottom: 8 }}>
               No agents running
             </div>
-            <div style={{ fontSize: '18px', color: 'var(--pixel-text-dim)' }}>
+            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
               Click <b>Spawn</b> or start Claude Code in a project
             </div>
           </div>

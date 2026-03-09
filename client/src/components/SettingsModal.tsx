@@ -41,23 +41,6 @@ export function applyTheme(theme: 'dark' | 'light'): void {
 // Apply theme on module load
 applyTheme(getStoredTheme());
 
-const menuItemBase: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: '100%',
-  padding: '10px 14px',
-  fontSize: 'var(--text-base)',
-  fontFamily: 'var(--system-font)',
-  color: 'var(--pixel-text)',
-  background: 'transparent',
-  border: 'none',
-  borderRadius: 0,
-  cursor: 'pointer',
-  textAlign: 'left',
-  minHeight: 36,
-};
-
 const SOUND_LABELS: Record<SoundType, string> = {
   done: 'Done chime',
   permission: 'Permission alert',
@@ -65,6 +48,37 @@ const SOUND_LABELS: Record<SoundType, string> = {
   spawn: 'Spawn note',
   search: 'Search click',
 };
+
+const Toggle = ({ checked, onClick }: { checked: boolean; onClick?: () => void }) => (
+  <button
+    onClick={onClick}
+    style={{
+      position: 'relative',
+      width: 36,
+      height: 20,
+      borderRadius: 10,
+      background: checked ? 'var(--accent)' : 'var(--btn-bg)',
+      border: 'none',
+      cursor: 'pointer',
+      padding: 0,
+      flexShrink: 0,
+      transition: 'background 0.2s ease',
+    }}
+  >
+    <span
+      style={{
+        position: 'absolute',
+        top: 2,
+        left: checked ? 18 : 2,
+        width: 16,
+        height: 16,
+        borderRadius: '50%',
+        background: '#fff',
+        transition: 'left 0.2s ease',
+      }}
+    />
+  </button>
+);
 
 export function SettingsModal({
   isOpen,
@@ -95,8 +109,7 @@ export function SettingsModal({
     setTimeout(unsub, 3000);
   }
 
-  const handleToggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
+  const handleSetTheme = (newTheme: 'dark' | 'light') => {
     setTheme(newTheme);
     applyTheme(newTheme);
   };
@@ -131,30 +144,24 @@ export function SettingsModal({
 
   if (!isOpen) return null;
 
-  const Checkbox = ({ checked }: { checked: boolean }) => (
-    <span
-      style={{
-        width: 18,
-        height: 18,
-        border: '2px solid var(--pixel-border-light)',
-        borderRadius: 2,
-        background: checked ? 'var(--pixel-accent)' : 'transparent',
-        flexShrink: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 'var(--text-xs)',
-        fontFamily: 'var(--system-font)',
-        lineHeight: 1,
-        color: '#fff',
-      }}
-    >
-      {checked ? '✓' : ''}
-    </span>
-  );
+  const settingsItemStyle = (key: string): React.CSSProperties => ({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: '12px 20px',
+    fontSize: 'var(--text-base)',
+    color: 'var(--text-primary)',
+    background: hovered === key ? 'var(--btn-hover)' : 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
+    minHeight: 40,
+  });
 
   return (
     <>
+      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
@@ -163,10 +170,14 @@ export function SettingsModal({
           left: 0,
           width: '100%',
           height: '100%',
-          background: 'rgba(0, 0, 0, 0.5)',
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           zIndex: 49,
         }}
       />
+
+      {/* Modal */}
       <div
         style={{
           position: 'fixed',
@@ -174,12 +185,12 @@ export function SettingsModal({
           left: '50%',
           transform: 'translate(-50%, -50%)',
           zIndex: 50,
-          background: 'var(--pixel-bg)',
-          border: '2px solid var(--pixel-border)',
-          borderRadius: 4,
-          padding: '8px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.5), var(--pixel-shadow)',
-          minWidth: 340,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 0,
+          boxShadow: 'var(--shadow-lg)',
+          minWidth: 380,
           maxHeight: '80vh',
           overflowY: 'auto',
         }}
@@ -190,55 +201,100 @@ export function SettingsModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '8px 14px',
-            borderBottom: '1px solid var(--pixel-border)',
-            marginBottom: '8px',
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--border)',
           }}
         >
-          <span style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)' }}>Settings</span>
+          <span style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--text-primary)' }}>
+            Settings
+          </span>
           <button
             onClick={onClose}
             onMouseEnter={() => setHovered('close')}
             onMouseLeave={() => setHovered(null)}
             style={{
-              background: hovered === 'close' ? 'var(--pixel-btn-hover-bg)' : 'transparent',
+              background: hovered === 'close' ? 'var(--btn-hover)' : 'transparent',
               border: 'none',
-              borderRadius: 0,
-              color: 'var(--pixel-text-dim)',
-              fontSize: 'var(--text-xl)',
-              fontFamily: 'var(--system-font)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-secondary)',
+              fontSize: 18,
               cursor: 'pointer',
               padding: '4px 8px',
               lineHeight: 1,
-              minHeight: 32,
+              width: 32,
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             ×
           </button>
         </div>
 
-        {/* Theme toggle */}
-        <button
-          onClick={handleToggleTheme}
-          onMouseEnter={() => setHovered('theme')}
-          onMouseLeave={() => setHovered(null)}
-          style={{ ...menuItemBase, background: hovered === 'theme' ? 'var(--pixel-btn-hover-bg)' : 'transparent' }}
+        {/* Theme toggle - segmented control */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 20px',
+          }}
         >
-          <span>Theme</span>
-          <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-accent)', border: '1px solid var(--pixel-accent)', padding: '2px 10px', borderRadius: 8 }}>
-            {theme === 'dark' ? 'Dark' : 'Light'}
-          </span>
-        </button>
+          <span style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)' }}>Theme</span>
+          <div
+            style={{
+              display: 'flex',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--btn-bg)',
+              padding: 2,
+              gap: 2,
+            }}
+          >
+            <button
+              onClick={() => handleSetTheme('dark')}
+              style={{
+                padding: '4px 14px',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: 'var(--radius-sm)',
+                background: theme === 'dark' ? 'var(--accent)' : 'transparent',
+                color: theme === 'dark' ? '#fff' : 'var(--text-secondary)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Dark
+            </button>
+            <button
+              onClick={() => handleSetTheme('light')}
+              style={{
+                padding: '4px 14px',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 500,
+                border: 'none',
+                cursor: 'pointer',
+                borderRadius: 'var(--radius-sm)',
+                background: theme === 'light' ? 'var(--accent)' : 'transparent',
+                color: theme === 'light' ? '#fff' : 'var(--text-secondary)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Light
+            </button>
+          </div>
+        </div>
 
         {/* Notifications toggle */}
         <button
           onClick={handleToggleNotifications}
           onMouseEnter={() => setHovered('notif')}
           onMouseLeave={() => setHovered(null)}
-          style={{ ...menuItemBase, background: hovered === 'notif' ? 'var(--pixel-btn-hover-bg)' : 'transparent' }}
+          style={settingsItemStyle('notif')}
         >
           <span>Notifications</span>
-          <Checkbox checked={notificationsOn} />
+          <Toggle checked={notificationsOn} />
         </button>
 
         {/* Sound master toggle */}
@@ -251,14 +307,14 @@ export function SettingsModal({
           }}
           onMouseEnter={() => setHovered('sound')}
           onMouseLeave={() => setHovered(null)}
-          style={{ ...menuItemBase, background: hovered === 'sound' ? 'var(--pixel-btn-hover-bg)' : 'transparent' }}
+          style={settingsItemStyle('sound')}
         >
           <span>Sound Notifications</span>
-          <Checkbox checked={soundLocal} />
+          <Toggle checked={soundLocal} />
         </button>
 
         {/* Per-sound toggles */}
-        <div style={{ padding: '0 14px 8px 28px' }}>
+        <div style={{ padding: '0 20px 12px 36px' }}>
           {(Object.keys(SOUND_LABELS) as SoundType[]).map((type) => (
             <div
               key={type}
@@ -266,42 +322,36 @@ export function SettingsModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '6px 0',
+                padding: '8px 0',
                 fontSize: 'var(--text-base)',
-                fontFamily: 'var(--system-font)',
-                color: 'var(--pixel-text-dim)',
+                color: 'var(--text-secondary)',
               }}
             >
               <span>{SOUND_LABELS[type]}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button
                   onClick={() => playSoundByType(type)}
                   style={{
-                    background: 'var(--pixel-btn-bg)',
-                    border: '1px solid var(--pixel-border)',
-                    color: 'var(--pixel-text-dim)',
+                    background: 'var(--btn-bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-secondary)',
                     cursor: 'pointer',
                     padding: '4px 10px',
                     fontSize: 'var(--text-sm)',
-                    fontFamily: 'var(--pixel-font)',
-                    minHeight: 28,
+                    fontWeight: 500,
                   }}
                 >
                   Test
                 </button>
-                <button
-                  onClick={() => handleSoundPrefToggle(type)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                >
-                  <Checkbox checked={soundPrefs[type]} />
-                </button>
+                <Toggle checked={soundPrefs[type]} onClick={() => handleSoundPrefToggle(type)} />
               </div>
             </div>
           ))}
 
           {/* Volume slider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-            <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>Volume</span>
+            <span style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>Volume</span>
             <input
               type="range"
               min="0"
@@ -310,16 +360,18 @@ export function SettingsModal({
               onChange={handleVolumeChange}
               style={{ flex: 1 }}
             />
-            <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', minWidth: 36, textAlign: 'right' }}>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', minWidth: 36, textAlign: 'right' }}>
               {Math.round(volume * 100)}%
             </span>
           </div>
         </div>
 
         {/* Webhook URL */}
-        <div style={{ padding: '10px 14px', borderTop: '1px solid var(--pixel-border)' }}>
-          <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)', marginBottom: 6 }}>Webhook URL</div>
-          <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
+            Webhook URL
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
             <input
               type="text"
               value={webhookUrl}
@@ -327,27 +379,34 @@ export function SettingsModal({
               placeholder="Discord or Slack webhook URL"
               style={{
                 flex: 1,
-                background: 'var(--pixel-btn-bg)',
-                border: '1px solid var(--pixel-border)',
-                color: 'var(--pixel-text)',
-                padding: '6px 10px',
+                background: 'var(--btn-bg)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+                padding: '10px 14px',
                 fontSize: 'var(--text-base)',
-                fontFamily: 'var(--system-font)',
                 outline: 'none',
-                minHeight: 36,
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = 'var(--accent)';
+                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(10, 132, 255, 0.15)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
             />
             <button
               onClick={handleWebhookSave}
               style={{
-                background: 'var(--pixel-btn-bg)',
-                border: '1px solid var(--pixel-border)',
-                color: 'var(--pixel-accent)',
+                background: 'var(--btn-bg)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--accent)',
                 cursor: 'pointer',
-                padding: '6px 14px',
+                padding: '10px 16px',
                 fontSize: 'var(--text-base)',
-                fontFamily: 'var(--pixel-font)',
-                minHeight: 36,
+                fontWeight: 500,
               }}
             >
               Save
@@ -360,44 +419,55 @@ export function SettingsModal({
           onClick={onToggleDebugMode}
           onMouseEnter={() => setHovered('debug')}
           onMouseLeave={() => setHovered(null)}
-          style={{ ...menuItemBase, background: hovered === 'debug' ? 'var(--pixel-btn-hover-bg)' : 'transparent', borderTop: '1px solid var(--pixel-border)' }}
+          style={{
+            ...settingsItemStyle('debug'),
+            borderTop: '1px solid var(--border)',
+          }}
         >
           <span>Debug View</span>
           {isDebugMode && (
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--pixel-accent)', flexShrink: 0 }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
           )}
         </button>
 
-        {/* Clear History */}
-        <div style={{ padding: '10px 14px', borderTop: '1px solid var(--pixel-border)' }}>
+        {/* Clear History - Danger Zone */}
+        <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)' }}>
           {!clearConfirm ? (
             <button
               onClick={() => setClearConfirm(true)}
               onMouseEnter={() => setHovered('clear')}
               onMouseLeave={() => setHovered(null)}
               style={{
-                ...menuItemBase,
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
                 padding: 0,
-                color: 'var(--pixel-text-dim)',
-                background: hovered === 'clear' ? 'var(--pixel-btn-hover-bg)' : 'transparent',
+                fontSize: 'var(--text-base)',
+                color: 'var(--red, #ff453a)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left',
               }}
             >
               Clear History
             </button>
           ) : (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>Clear all history?</span>
+              <span style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>
+                Clear all history?
+              </span>
               <button
                 onClick={handleClearHistory}
                 style={{
-                  background: 'var(--pixel-danger-bg)',
+                  background: 'var(--red, #ff453a)',
                   border: 'none',
+                  borderRadius: 'var(--radius-sm)',
                   color: '#fff',
                   cursor: 'pointer',
                   padding: '6px 14px',
                   fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--pixel-font)',
-                  minHeight: 36,
+                  fontWeight: 600,
                 }}
               >
                 Yes
@@ -405,14 +475,14 @@ export function SettingsModal({
               <button
                 onClick={() => setClearConfirm(false)}
                 style={{
-                  background: 'var(--pixel-btn-bg)',
-                  border: '1px solid var(--pixel-border)',
-                  color: 'var(--pixel-text)',
+                  background: 'var(--btn-bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-primary)',
                   cursor: 'pointer',
                   padding: '6px 14px',
                   fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--pixel-font)',
-                  minHeight: 36,
+                  fontWeight: 500,
                 }}
               >
                 No

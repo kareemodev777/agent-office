@@ -167,15 +167,15 @@ function formatToolInput(toolName: string, input: Record<string, unknown>): stri
 
 function typeColor(type: string): string {
   switch (type) {
-    case 'user': return '#7ec8e3';
-    case 'assistant': return '#a8d8a8';
-    case 'tool': return '#e8c87e';
-    case 'task': return '#e8a04e';
-    case 'agent': return '#c8a8e8';
-    case 'result': return '#8e8e8e';
-    case 'error': return '#e87e7e';
-    case 'system': return '#888';
-    default: return 'var(--pixel-text-dim)';
+    case 'user': return '#64D2FF';
+    case 'assistant': return '#30D158';
+    case 'tool': return '#FFD60A';
+    case 'task': return '#FF9F0A';
+    case 'agent': return '#BF5AF2';
+    case 'result': return 'var(--text-tertiary)';
+    case 'error': return '#FF453A';
+    case 'system': return 'var(--text-tertiary)';
+    default: return 'var(--text-secondary)';
   }
 }
 
@@ -216,11 +216,11 @@ function formatCost(inputTokens: number, outputTokens: number): string {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  architect: '#7ec8e3',
-  builder: '#a8d8a8',
-  reviewer: '#c8a8e8',
-  tester: '#e8c87e',
-  documenter: '#8ee8d8',
+  architect: '#64D2FF',
+  builder: '#30D158',
+  reviewer: '#BF5AF2',
+  tester: '#FFD60A',
+  documenter: '#5AC8FA',
 };
 
 export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: InspectPanelProps) {
@@ -312,7 +312,7 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
   const projectName = agentLabel;
   const showProject = projectName && projectName !== displayLabel;
   const displayRole = meta?.role || agentRole;
-  const roleColor = displayRole ? ROLE_COLORS[displayRole] || 'var(--pixel-text-dim)' : undefined;
+  const roleColor = displayRole ? ROLE_COLORS[displayRole] || 'var(--text-secondary)' : undefined;
 
   return (
     <div
@@ -321,11 +321,11 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
         top: 0,
         right: 0,
         bottom: 0,
-        width: 420,
+        width: 380,
         zIndex: 100,
-        background: 'var(--pixel-bg)',
-        borderLeft: '2px solid var(--pixel-border)',
-        boxShadow: '-4px 0 16px rgba(0,0,0,0.5)',
+        background: 'var(--surface)',
+        borderLeft: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-lg)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -335,18 +335,18 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
       <div
         style={{
           padding: '12px 16px',
-          borderBottom: '2px solid var(--pixel-border)',
+          borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: 'var(--text-xl)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text)', fontWeight: 'bold' }}>
+              <span style={{ fontSize: 'var(--text-xl)', color: 'var(--text-primary)', fontWeight: 600 }}>
                 {displayLabel}
               </span>
               {showProject && (
-                <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--system-font)', color: '#c8a8e8' }}>
+                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
                   {projectName}
                 </span>
               )}
@@ -354,13 +354,13 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
             {displayRole && (
               <span
                 style={{
-                  fontSize: 'var(--text-sm)',
-                  fontFamily: 'var(--pixel-font)',
+                  fontSize: 'var(--text-caption)',
+                  fontWeight: 500,
                   color: roleColor,
                   background: `${roleColor}18`,
                   border: `1px solid ${roleColor}`,
                   padding: '2px 8px',
-                  borderRadius: 10,
+                  borderRadius: 12,
                   textTransform: 'uppercase',
                   flexShrink: 0,
                   letterSpacing: '0.5px',
@@ -376,20 +376,21 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--pixel-close-text)',
+              color: 'var(--text-tertiary)',
               cursor: 'pointer',
               padding: '4px 8px',
-              fontSize: 'var(--pxfont-base)',
-              fontFamily: 'var(--system-font)',
+              fontSize: 18,
               lineHeight: 1,
               flexShrink: 0,
               minHeight: 32,
+              borderRadius: 'var(--radius-sm)',
+              transition: 'color 0.15s ease',
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = 'var(--pixel-close-hover)';
+              (e.currentTarget as HTMLElement).style.color = 'var(--red)';
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = 'var(--pixel-close-text)';
+              (e.currentTarget as HTMLElement).style.color = 'var(--text-tertiary)';
             }}
           >
             ×
@@ -398,16 +399,16 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
 
         {/* Metadata row */}
         {meta && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 10, fontSize: 'var(--text-lg)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 10, fontSize: 'var(--text-lg)', color: 'var(--text-secondary)' }}>
             {meta.gitBranch && (
               <span title="Git branch">
-                <span style={{ color: '#a8d8a8', fontWeight: 600, marginRight: 4 }}>branch</span>
+                <span style={{ color: '#30D158', fontWeight: 600, marginRight: 4 }}>branch</span>
                 {meta.gitBranch}
               </span>
             )}
             {meta.startedAt > 0 && (
               <span title="Running time">
-                <span style={{ color: '#e8c87e', fontWeight: 600, marginRight: 4 }}>time</span>
+                <span style={{ color: '#FFD60A', fontWeight: 600, marginRight: 4 }}>time</span>
                 {formatDuration(meta.startedAt)}
               </span>
             )}
@@ -416,17 +417,17 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
 
         {/* Token stats row */}
         {meta && (meta.inputTokens > 0 || meta.outputTokens > 0) && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 6, fontSize: 'var(--text-lg)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 6, fontSize: 'var(--text-lg)', color: 'var(--text-secondary)' }}>
             <span>
-              <span style={{ color: '#7ec8e3', fontWeight: 600, marginRight: 4 }}>in</span>
+              <span style={{ color: '#64D2FF', fontWeight: 600, marginRight: 4 }}>in</span>
               {formatTokens(meta.inputTokens)}
             </span>
             <span>
-              <span style={{ color: '#a8d8a8', fontWeight: 600, marginRight: 4 }}>out</span>
+              <span style={{ color: '#30D158', fontWeight: 600, marginRight: 4 }}>out</span>
               {formatTokens(meta.outputTokens)}
             </span>
             <span>
-              <span style={{ color: '#e8c87e', fontWeight: 600, marginRight: 4 }}>cost</span>
+              <span style={{ color: '#BF5AF2', fontWeight: 600, marginRight: 4 }}>cost</span>
               {formatCost(meta.inputTokens, meta.outputTokens)}
             </span>
           </div>
@@ -437,14 +438,21 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
           <button
             onClick={handleCopyTranscript}
             style={{
-              background: 'var(--pixel-btn-bg)',
-              border: '1px solid var(--pixel-border)',
-              color: 'var(--pixel-text-dim)',
+              background: 'var(--btn-bg)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               padding: '6px 14px',
               fontSize: 'var(--text-base)',
-              fontFamily: 'var(--pixel-font)',
               minHeight: 32,
+              borderRadius: 'var(--radius-sm)',
+              transition: 'background 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'var(--btn-hover)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'var(--btn-bg)';
             }}
           >
             Copy Transcript
@@ -463,11 +471,11 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
         }}
       >
         {loading ? (
-          <div style={{ color: 'var(--pixel-text-dim)', fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', padding: 16 }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-base)', padding: 16 }}>
             Loading...
           </div>
         ) : lines.length === 0 ? (
-          <div style={{ color: 'var(--pixel-text-dim)', fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', padding: 16 }}>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-base)', padding: 16 }}>
             No activity data available.
           </div>
         ) : (
@@ -476,7 +484,7 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
               key={i}
               style={{
                 padding: '8px 0',
-                borderBottom: '1px solid var(--pixel-border)',
+                borderBottom: '1px solid var(--border)',
                 display: 'flex',
                 gap: 8,
                 alignItems: 'flex-start',
@@ -484,14 +492,13 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
             >
               <span
                 style={{
-                  fontSize: 'var(--text-xs)',
-                  fontFamily: 'var(--pixel-font)',
-                  fontWeight: 'bold',
+                  fontSize: 11,
+                  fontWeight: 600,
                   color: typeColor(line.type),
                   flexShrink: 0,
                   minWidth: 36,
                   textAlign: 'center',
-                  padding: '3px 6px',
+                  padding: '2px 6px',
                   background: `${typeColor(line.type)}18`,
                   border: `1px solid ${typeColor(line.type)}`,
                   borderRadius: 10,
@@ -504,8 +511,7 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
               <span
                 style={{
                   fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--system-font)',
-                  color: 'var(--pixel-text)',
+                  color: 'var(--text-primary)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   wordBreak: 'break-word',
@@ -526,15 +532,16 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
             position: 'absolute',
             bottom: 12,
             right: 24,
-            background: 'var(--pixel-bg)',
-            border: '1px solid var(--pixel-border)',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
             padding: '6px 14px',
             fontSize: 'var(--text-sm)',
-            fontFamily: 'var(--pixel-font)',
-            color: 'var(--pixel-text-dim)',
+            color: 'var(--text-secondary)',
             cursor: 'pointer',
             zIndex: 101,
-            boxShadow: 'var(--pixel-shadow)',
+            boxShadow: 'var(--shadow-sm)',
+            borderRadius: 'var(--radius-md)',
+            transition: 'background 0.15s ease',
           }}
           onClick={() => {
             setAutoScroll(true);

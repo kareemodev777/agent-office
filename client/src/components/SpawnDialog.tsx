@@ -35,6 +35,28 @@ function getLastCwd(): string {
   return localStorage.getItem(LAST_CWD_KEY) || '';
 }
 
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 14px',
+  fontSize: 'var(--text-base)',
+  background: 'var(--btn-bg)',
+  color: 'var(--text-primary)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-sm)',
+  boxSizing: 'border-box',
+  outline: 'none',
+};
+
+function applyFocusRing(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = 'var(--accent)';
+  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(10, 132, 255, 0.15)';
+}
+
+function removeFocusRing(e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  e.currentTarget.style.borderColor = 'var(--border)';
+  e.currentTarget.style.boxShadow = 'none';
+}
+
 export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
   const [cwd, setCwd] = useState(getLastCwd);
   const [prompt, setPrompt] = useState('');
@@ -50,7 +72,6 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
   }, []);
 
   useEffect(() => {
-    // Request project folders from server
     transport.postMessage({ type: 'getProjects' });
     const unsub = transport.onMessage((msg: Record<string, unknown>) => {
       if (msg.type === 'projects') {
@@ -78,7 +99,9 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -90,23 +113,26 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
     >
       <div
         style={{
-          background: 'var(--pixel-bg)',
-          border: '2px solid var(--pixel-border)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.5), var(--pixel-shadow)',
-          padding: 20,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-lg)',
+          padding: 24,
           width: 480,
-          borderRadius: 4,
         }}
       >
-        <div style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)', marginBottom: 16 }}>
+        {/* Title */}
+        <div style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 20 }}>
           Spawn Agent
         </div>
-        <div style={{ marginBottom: 8 }}>
+
+        {/* Working Directory */}
+        <div style={{ marginBottom: 12 }}>
           <label
             style={{
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--system-font)',
-              color: 'var(--pixel-text-dim)',
+              fontSize: 'var(--text-sm)',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -118,8 +144,8 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
               onClick={() => setShowBrowser(!showBrowser)}
               style={{
                 fontSize: 'var(--text-sm)',
-                fontFamily: 'var(--pixel-font)',
-                color: 'var(--pixel-accent)',
+                fontWeight: 500,
+                color: 'var(--accent)',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -136,24 +162,15 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                // If prompt is filled, submit; otherwise focus prompt
                 if (prompt.trim()) {
                   handleSubmit();
                 }
               }
             }}
             placeholder="/path/to/project"
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--system-font)',
-              background: 'var(--pixel-btn-bg)',
-              color: 'var(--pixel-text)',
-              border: '1px solid var(--pixel-border)',
-              boxSizing: 'border-box',
-              minHeight: 36,
-            }}
+            style={inputStyle}
+            onFocus={applyFocusRing}
+            onBlur={removeFocusRing}
           />
         </div>
 
@@ -161,11 +178,12 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
         {showBrowser && projects.length > 0 && (
           <div
             style={{
-              marginBottom: 8,
+              marginBottom: 12,
               maxHeight: 160,
               overflowY: 'auto',
-              border: '1px solid var(--pixel-border)',
-              background: 'rgba(0,0,0,0.2)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--btn-bg)',
             }}
           >
             {projects.map((p, i) => (
@@ -178,18 +196,18 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
                   display: 'block',
                   width: '100%',
                   textAlign: 'left',
-                  padding: '8px 12px',
+                  padding: '8px 14px',
                   fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--system-font)',
-                  color: cwd === p.path ? 'var(--pixel-agent-text)' : 'var(--pixel-text)',
+                  color: cwd === p.path ? '#fff' : 'var(--text-primary)',
                   background:
                     cwd === p.path
-                      ? 'var(--pixel-agent-bg)'
+                      ? 'var(--accent)'
                       : hoveredProject === i
-                        ? 'var(--pixel-btn-hover-bg)'
+                        ? 'var(--btn-hover)'
                         : 'transparent',
                   border: 'none',
                   cursor: 'pointer',
+                  borderRadius: 'var(--radius-sm)',
                 }}
               >
                 {p.name}
@@ -200,8 +218,8 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
 
         {/* Recent projects */}
         {!showBrowser && recentProjects.length > 0 && (
-          <div style={{ marginBottom: 8 }}>
-            <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text-dim)' }}>Recent: </span>
+          <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', fontWeight: 500 }}>Recent:</span>
             {recentProjects.map((rp) => {
               const name = rp.split('/').pop() || rp;
               return (
@@ -210,13 +228,13 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
                   onClick={() => setCwd(rp)}
                   style={{
                     fontSize: 'var(--text-sm)',
-                    fontFamily: 'var(--system-font)',
-                    color: 'var(--pixel-accent)',
-                    background: 'none',
-                    border: 'none',
+                    color: 'var(--accent)',
+                    background: 'var(--btn-bg)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 12,
                     cursor: 'pointer',
-                    padding: '0 4px',
-                    textDecoration: 'underline',
+                    padding: '2px 10px',
+                    textDecoration: 'none',
                   }}
                 >
                   {name}
@@ -226,12 +244,13 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
           </div>
         )}
 
-        <div style={{ marginBottom: 12 }}>
+        {/* Prompt */}
+        <div style={{ marginBottom: 16 }}>
           <label
             style={{
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--system-font)',
-              color: 'var(--pixel-text-dim)',
+              fontSize: 'var(--text-sm)',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
               display: 'block',
               marginBottom: 6,
             }}
@@ -244,16 +263,11 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
             placeholder="What should the agent do?"
             rows={3}
             style={{
-              width: '100%',
-              padding: '8px 12px',
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--system-font)',
-              background: 'var(--pixel-btn-bg)',
-              color: 'var(--pixel-text)',
-              border: '1px solid var(--pixel-border)',
+              ...inputStyle,
               resize: 'vertical',
-              boxSizing: 'border-box',
             }}
+            onFocus={applyFocusRing}
+            onBlur={removeFocusRing}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || !e.shiftKey)) {
                 e.preventDefault();
@@ -261,21 +275,23 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
               }
             }}
           />
-          <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', marginTop: 4, display: 'block' }}>
             Press Enter to submit, Shift+Enter for newline
           </span>
         </div>
+
+        {/* Buttons */}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
             style={{
               padding: '8px 16px',
               fontSize: 'var(--text-base)',
-              fontFamily: 'var(--pixel-font)',
-              minHeight: 36,
-              background: 'var(--pixel-btn-bg)',
-              color: 'var(--pixel-text)',
-              border: '1px solid var(--pixel-border)',
+              fontWeight: 500,
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--btn-bg)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border)',
               cursor: 'pointer',
             }}
           >
@@ -286,11 +302,11 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
             style={{
               padding: '8px 16px',
               fontSize: 'var(--text-base)',
-              fontFamily: 'var(--pixel-font)',
-              minHeight: 36,
-              background: 'var(--pixel-agent-bg)',
-              color: 'var(--pixel-agent-text)',
-              border: '1px solid var(--pixel-agent-border)',
+              fontWeight: 600,
+              borderRadius: 'var(--radius-sm)',
+              background: '#30D158',
+              color: '#fff',
+              border: 'none',
               cursor: 'pointer',
             }}
           >

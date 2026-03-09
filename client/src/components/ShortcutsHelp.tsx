@@ -20,7 +20,9 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.5)',
+        background: 'rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -32,12 +34,12 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
     >
       <div
         style={{
-          background: 'var(--pixel-bg)',
-          border: '2px solid var(--pixel-border)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.5), var(--pixel-shadow)',
-          padding: 20,
-          width: 360,
-          borderRadius: 4,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-lg)',
+          padding: 24,
+          width: 380,
         }}
       >
         <div
@@ -45,18 +47,17 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 12,
+            marginBottom: 16,
           }}
         >
-          <span style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)' }}>Keyboard Shortcuts</span>
+          <span style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--text-primary)' }}>Keyboard Shortcuts</span>
           <button
             onClick={onClose}
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--pixel-text-dim)',
+              color: 'var(--text-secondary)',
               fontSize: 'var(--text-xl)',
-              fontFamily: 'var(--system-font)',
               cursor: 'pointer',
               padding: '4px 8px',
               minHeight: 32,
@@ -71,22 +72,23 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
             style={{
               display: 'flex',
               justifyContent: 'space-between',
+              alignItems: 'center',
               padding: '8px 0',
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--system-font)',
-              color: 'var(--pixel-text)',
+              fontSize: 'var(--text-sm)',
+              color: 'var(--text-primary)',
             }}
           >
-            <span style={{ color: 'var(--pixel-text-dim)' }}>{desc}</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{desc}</span>
             <span
               style={{
-                color: 'var(--pixel-accent)',
-                fontFamily: 'var(--pixel-font)',
+                color: 'var(--text-primary)',
                 fontSize: 'var(--text-sm)',
-                border: '1px solid var(--pixel-border)',
-                padding: '2px 10px',
-                borderRadius: 4,
-                minWidth: 28,
+                fontWeight: 500,
+                background: 'var(--surface-elevated)',
+                border: '1px solid var(--border)',
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-sm)',
+                minWidth: 32,
                 textAlign: 'center',
               }}
             >

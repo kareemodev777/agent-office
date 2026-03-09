@@ -74,9 +74,9 @@ export function AgentLabels({
 
         let dotColor = 'transparent';
         if (isWaiting) {
-          dotColor = 'var(--pixel-status-permission)';
+          dotColor = 'var(--status-permission)';
         } else if (isActive) {
-          dotColor = 'var(--pixel-status-active)';
+          dotColor = 'var(--status-active)';
         }
 
         const labelText = subLabelMap.get(id) || `Agent #${id}`;
@@ -112,10 +112,12 @@ export function AgentLabels({
               style={{
                 fontSize: isSub ? '16px' : '18px',
                 fontStyle: isSub ? 'italic' : undefined,
-                color: 'var(--pixel-text)',
-                background: 'rgba(30,30,46,0.7)',
+                color: 'var(--text-primary)',
+                background: 'rgba(15, 15, 17, 0.75)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
                 padding: '1px 4px',
-                borderRadius: 2,
+                borderRadius: 4,
                 whiteSpace: 'nowrap',
                 maxWidth: isSub ? 120 : undefined,
                 overflow: isSub ? 'hidden' : undefined,

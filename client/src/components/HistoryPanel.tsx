@@ -33,9 +33,9 @@ export function HistoryPanel({
         left: 0,
         bottom: 0,
         width: 360,
-        background: 'var(--pixel-bg)',
-        borderRight: '2px solid var(--pixel-border)',
-        boxShadow: '4px 0 8px rgba(0,0,0,0.3)',
+        background: 'var(--surface)',
+        borderRight: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-lg)',
         zIndex: 200,
         display: 'flex',
         flexDirection: 'column',
@@ -48,19 +48,18 @@ export function HistoryPanel({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '8px 12px',
-          borderBottom: '2px solid var(--pixel-border)',
+          padding: '12px 16px',
+          borderBottom: '1px solid var(--border)',
         }}
       >
-        <span style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)' }}>Session History</span>
+        <span style={{ fontSize: 'var(--text-xl)', fontWeight: 600, color: 'var(--text-primary)' }}>Session History</span>
         <button
           onClick={onClose}
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--pixel-text-dim)',
+            color: 'var(--text-secondary)',
             fontSize: 'var(--text-xl)',
-            fontFamily: 'var(--system-font)',
             cursor: 'pointer',
             padding: '4px 8px',
             minHeight: 32,
@@ -86,29 +85,29 @@ export function HistoryPanel({
                 display: 'block',
                 width: '100%',
                 textAlign: 'left',
-                padding: '10px 14px',
+                padding: '10px 16px',
                 background: 'transparent',
                 border: 'none',
-                borderBottom: '1px solid var(--pixel-border)',
+                borderBottom: '1px solid var(--border)',
                 cursor: 'pointer',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span
                   style={{
-                    width: 6,
-                    height: 6,
+                    width: 8,
+                    height: 8,
                     borderRadius: '50%',
-                    background: '#5ac88c',
-                    boxShadow: '0 0 4px #5ac88c',
+                    background: '#30D158',
+                    boxShadow: '0 0 6px rgba(48, 209, 88, 0.5)',
                     flexShrink: 0,
                   }}
                 />
                 <span
                   style={{
-                    fontSize: 'var(--text-lg)',
-                    fontFamily: 'var(--system-font)',
-                    color: 'var(--pixel-text)',
+                    fontSize: 'var(--text-base)',
+                    fontWeight: 500,
+                    color: 'var(--text-primary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -119,12 +118,12 @@ export function HistoryPanel({
                 {info.role && (
                   <span
                     style={{
-                      fontSize: 'var(--text-xs)',
-                      fontFamily: 'var(--pixel-font)',
-                      color: 'var(--pixel-accent)',
-                      border: '1px solid var(--pixel-accent)',
-                      padding: '1px 6px',
-                      borderRadius: 8,
+                      fontSize: 'var(--text-caption)',
+                      fontWeight: 500,
+                      color: 'var(--accent)',
+                      border: '1px solid var(--accent)',
+                      padding: '2px 8px',
+                      borderRadius: 12,
                       flexShrink: 0,
                       textTransform: 'uppercase',
                     }}
@@ -135,16 +134,15 @@ export function HistoryPanel({
               </div>
               <div
                 style={{
-                  fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--system-font)',
-                  color: 'var(--pixel-text-dim)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--text-secondary)',
                   marginTop: 4,
                   display: 'flex',
-                  gap: 8,
+                  gap: 10,
                 }}
               >
                 <span>{formatDuration(duration)}</span>
-                <span>${cost.toFixed(2)}</span>
+                <span style={{ color: '#BF5AF2' }}>${cost.toFixed(2)}</span>
               </div>
             </button>
           );
@@ -157,26 +155,26 @@ export function HistoryPanel({
             <div
               key={`closed-${s.id}-${s.closedAt}`}
               style={{
-                padding: '10px 14px',
-                borderBottom: '1px solid var(--pixel-border)',
+                padding: '10px 16px',
+                borderBottom: '1px solid var(--border)',
                 opacity: 0.5,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span
                   style={{
-                    width: 6,
-                    height: 6,
+                    width: 8,
+                    height: 8,
                     borderRadius: '50%',
-                    background: 'var(--pixel-border)',
+                    background: 'var(--border)',
                     flexShrink: 0,
                   }}
                 />
                 <span
                   style={{
-                    fontSize: 'var(--text-lg)',
-                    fontFamily: 'var(--system-font)',
-                    color: 'var(--pixel-text)',
+                    fontSize: 'var(--text-base)',
+                    fontWeight: 500,
+                    color: 'var(--text-primary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -187,12 +185,12 @@ export function HistoryPanel({
                 {s.role && (
                   <span
                     style={{
-                      fontSize: 'var(--text-xs)',
-                      fontFamily: 'var(--pixel-font)',
-                      color: 'var(--pixel-text-dim)',
-                      border: '1px solid var(--pixel-border)',
-                      padding: '1px 6px',
-                      borderRadius: 8,
+                      fontSize: 'var(--text-caption)',
+                      fontWeight: 500,
+                      color: 'var(--text-secondary)',
+                      border: '1px solid var(--border)',
+                      padding: '2px 8px',
+                      borderRadius: 12,
                       flexShrink: 0,
                       textTransform: 'uppercase',
                     }}
@@ -203,16 +201,15 @@ export function HistoryPanel({
               </div>
               <div
                 style={{
-                  fontSize: 'var(--text-base)',
-                  fontFamily: 'var(--system-font)',
-                  color: 'var(--pixel-text-dim)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--text-secondary)',
                   marginTop: 4,
                   display: 'flex',
-                  gap: 8,
+                  gap: 10,
                 }}
               >
                 <span>{formatDuration(s.duration)}</span>
-                <span>${cost.toFixed(2)}</span>
+                <span style={{ color: '#BF5AF2' }}>${cost.toFixed(2)}</span>
                 <span>finished</span>
               </div>
             </div>
@@ -222,11 +219,10 @@ export function HistoryPanel({
         {agents.length === 0 && closedSessions.length === 0 && (
           <div
             style={{
-              padding: 16,
+              padding: 20,
               textAlign: 'center',
-              fontSize: 'var(--text-base)',
-              fontFamily: 'var(--system-font)',
-              color: 'var(--pixel-text-dim)',
+              fontSize: 'var(--text-sm)',
+              color: 'var(--text-secondary)',
             }}
           >
             No sessions yet today
