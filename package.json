@@ -1,0 +1,16 @@
+{
+  "name": "agent-office",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npx tsx watch index.ts",
+    "dev:client": "cd client && npx vite",
+    "build": "cd client && npx vite build && cd ../server && npx tsc",
+    "start": "cd server && node dist/index.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
