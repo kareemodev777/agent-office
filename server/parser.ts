@@ -134,9 +134,25 @@ export function processTranscriptLine(
         type: string;
         id?: string;
         name?: string;
+        text?: string;
         input?: Record<string, unknown>;
       }>;
       const hasToolUse = blocks.some((b) => b.type === 'tool_use');
+
+      // Extract text preview from assistant text blocks (Feature 3)
+      const textBlocks = blocks.filter((b) => b.type === 'text' && b.text);
+      if (textBlocks.length > 0) {
+        const fullText = textBlocks.map((b) => b.text!).join(' ');
+        const firstLine = fullText.split('\n').find((l) => l.trim()) || '';
+        const preview = firstLine.trim().slice(0, 60);
+        if (preview) {
+          broadcast({
+            type: 'agentTextPreview',
+            id: agentId,
+            text: preview,
+          });
+        }
+      }
 
       if (hasToolUse) {
         cancelWaitingTimer(agentId, waitingTimers);

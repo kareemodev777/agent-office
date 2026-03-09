@@ -5,9 +5,12 @@ import { ContextMenu } from './components/ContextMenu.js';
 import { DebugView } from './components/DebugView.js';
 import { HistoryPanel } from './components/HistoryPanel.js';
 import { InspectPanel } from './components/InspectPanel.js';
+import { Minimap } from './components/Minimap.js';
+import { SearchPanel } from './components/SearchPanel.js';
 import { ShortcutsHelp } from './components/ShortcutsHelp.js';
 import { SpawnDialog } from './components/SpawnDialog.js';
 import { TopBar } from './components/TopBar.js';
+import { WidgetMode } from './components/WidgetMode.js';
 import { ZoomControls } from './components/ZoomControls.js';
 import { PULSE_ANIMATION_DURATION_SEC } from './constants.js';
 import { useEditorActions } from './hooks/useEditorActions.js';
@@ -23,6 +26,9 @@ import { OfficeState } from './office/engine/officeState.js';
 import { isRotatable } from './office/layout/furnitureCatalog.js';
 import { EditTool } from './office/types.js';
 import { transport } from './transport.js';
+
+const WIDGET_MODE_KEY = 'agent-office-widget-mode';
+const MINIMAP_KEY = 'agent-office-minimap';
 
 const officeStateRef = { current: null as OfficeState | null };
 const editorState = new EditorState();
@@ -154,6 +160,7 @@ function App() {
     stuckAgents,
     totalCost,
     closedSessions,
+    textPreviews,
   } = useExtensionMessages(getOfficeState, editor.setLastSavedLayout, isEditDirty);
 
   const [isDebugMode, setIsDebugMode] = useState(false);
@@ -163,9 +170,32 @@ function App() {
   const [showSpawnDialog, setShowSpawnDialog] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showMinimap, setShowMinimap] = useState(() => {
+    try { return localStorage.getItem(MINIMAP_KEY) !== 'false'; } catch { return true; }
+  });
+  const [isWidgetMode, setIsWidgetMode] = useState(() => {
+    try { return localStorage.getItem(WIDGET_MODE_KEY) === 'true'; } catch { return false; }
+  });
+  const [showSearch, setShowSearch] = useState(false);
 
   const handleSelectAgent = useCallback((_id: number) => {
     // No-op in standalone (no terminal to focus)
+  }, []);
+
+  const handleToggleMinimap = useCallback(() => {
+    setShowMinimap((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(MINIMAP_KEY, String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
+  const handleToggleWidget = useCallback(() => {
+    setIsWidgetMode((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(WIDGET_MODE_KEY, String(next)); } catch { /* ignore */ }
+      return next;
+    });
   }, []);
 
   // Keyboard shortcuts
@@ -187,13 +217,14 @@ function App() {
     }, []),
     onOpenSpawn: useCallback(() => setShowSpawnDialog(true), []),
     onClosePanel: useCallback(() => {
+      if (showSearch) { setShowSearch(false); return; }
       if (showShortcuts) { setShowShortcuts(false); return; }
       if (showSpawnDialog) { setShowSpawnDialog(false); return; }
       if (inspectAgentId !== null) { setInspectAgentId(null); return; }
       if (contextMenu) { setContextMenu(null); return; }
       const os = getOfficeState();
       os.selectedAgentId = null;
-    }, [showShortcuts, showSpawnDialog, inspectAgentId, contextMenu]),
+    }, [showSearch, showShortcuts, showSpawnDialog, inspectAgentId, contextMenu]),
     onSelectByIndex: useCallback((index: number) => {
       if (index < agents.length) {
         const id = agents[index];
@@ -202,6 +233,9 @@ function App() {
       }
     }, [agents]),
     onShowHelp: useCallback(() => setShowShortcuts((v) => !v), []),
+    onToggleMinimap: handleToggleMinimap,
+    onToggleWidget: handleToggleWidget,
+    onOpenSearch: useCallback(() => setShowSearch((v) => !v), []),
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -234,7 +268,6 @@ function App() {
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     const os = getOfficeState();
-    // Find character at click position
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const dpr = window.devicePixelRatio || 1;
@@ -273,6 +306,12 @@ function App() {
     transport.postMessage({ type: 'spawnAgent', cwd, prompt });
   }, []);
 
+  const handleCenterAgent = useCallback((agentId: number) => {
+    const os = getOfficeState();
+    os.selectedAgentId = agentId;
+    os.cameraFollowId = agentId;
+  }, []);
+
   const officeState = getOfficeState();
   void editorTickForKeyboard;
 
@@ -295,6 +334,27 @@ function App() {
     })();
 
   const inspectInfo = inspectAgentId !== null ? agentInfos[inspectAgentId] : undefined;
+
+  // Widget mode
+  if (isWidgetMode) {
+    return (
+      <WidgetMode
+        agents={agents}
+        agentInfos={agentInfos}
+        agentTools={agentTools}
+        totalCost={totalCost}
+        onInspect={(id) => {
+          setInspectAgentId(id);
+          setIsWidgetMode(false);
+          try { localStorage.setItem(WIDGET_MODE_KEY, 'false'); } catch { /* ignore */ }
+        }}
+        onExit={() => {
+          setIsWidgetMode(false);
+          try { localStorage.setItem(WIDGET_MODE_KEY, 'false'); } catch { /* ignore */ }
+        }}
+      />
+    );
+  }
 
   return (
     <div
@@ -356,6 +416,20 @@ function App() {
         />
       )}
 
+      {/* Search panel */}
+      {showSearch && (
+        <SearchPanel
+          onClose={() => setShowSearch(false)}
+          onInspect={(id) => {
+            setInspectAgentId(id);
+            setShowSearch(false);
+            const os = getOfficeState();
+            os.selectedAgentId = id;
+            os.cameraFollowId = id;
+          }}
+        />
+      )}
+
       {/* Connection status indicator */}
       <div
         style={{
@@ -396,6 +470,7 @@ function App() {
         onSpawnAgent={() => setShowSpawnDialog(true)}
         onShowHistory={() => setShowHistory(true)}
         onShowShortcuts={() => setShowShortcuts(true)}
+        onToggleWidget={handleToggleWidget}
       />
 
       {/* Aggregate cost bar */}
@@ -418,6 +493,19 @@ function App() {
       >
         <span style={{ color: '#c8a8e8' }}>Total: ~${totalCost.toFixed(2)} today</span>
       </div>
+
+      {/* Minimap */}
+      {showMinimap && !editor.isEditMode && agents.length > 0 && (
+        <Minimap
+          officeState={officeState}
+          agents={agents}
+          agentInfos={agentInfos}
+          zoom={editor.zoom}
+          panRef={editor.panRef}
+          containerRef={containerRef}
+          onCenterAgent={handleCenterAgent}
+        />
+      )}
 
       {editor.isEditMode && editor.isDirty && (
         <EditActionBar editor={editor} editorState={editorState} />
@@ -491,6 +579,7 @@ function App() {
         panRef={editor.panRef}
         onCloseAgent={handleCloseAgent}
         stuckAgents={stuckAgents}
+        textPreviews={textPreviews}
       />
 
       {isDebugMode && (

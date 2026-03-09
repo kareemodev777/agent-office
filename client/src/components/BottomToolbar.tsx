@@ -14,6 +14,7 @@ interface BottomToolbarProps {
   onSpawnAgent?: () => void;
   onShowHistory?: () => void;
   onShowShortcuts?: () => void;
+  onToggleWidget?: () => void;
 }
 
 const panelStyle: React.CSSProperties = {
@@ -57,6 +58,7 @@ export function BottomToolbar({
   onSpawnAgent,
   onShowHistory,
   onShowShortcuts,
+  onToggleWidget,
 }: BottomToolbarProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -164,6 +166,20 @@ export function BottomToolbar({
           title="Spawn a new agent with a prompt"
         >
           Spawn
+        </button>
+      )}
+      {onToggleWidget && (
+        <button
+          onClick={onToggleWidget}
+          onMouseEnter={() => setHovered('widget')}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            ...btnBase,
+            background: hovered === 'widget' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+          }}
+          title="Compact widget mode (W)"
+        >
+          Widget
         </button>
       )}
       <button

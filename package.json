@@ -1,6 +1,6 @@
 {
   "name": "agent-office",
-  "version": "1.0.0",
+  "version": "4.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,10 @@
     "dev:server": "cd server && npx tsx watch index.ts",
     "dev:client": "cd client && npx vite",
     "build": "cd client && npx vite build && cd ../server && npx tsc",
-    "start": "cd server && node dist/index.js"
+    "start": "cd server && node dist/index.js",
+    "app": "bash scripts/open-app.sh",
+    "install-service": "bash scripts/install-service.sh",
+    "uninstall-service": "bash scripts/uninstall-service.sh"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { playDoneSound, playAlertSound } from '../notificationSound.js';
+import { playDoneSound, playAlertSound, playStuckSound, playSpawnSound } from '../notificationSound.js';
+import { sendBrowserNotification } from '../notifications.js';
 import type { OfficeState } from '../office/engine/officeState.js';
 import { extractToolName } from '../office/toolUtils.js';
 import type { OfficeLayout, ToolActivity } from '../office/types.js';
@@ -92,6 +93,7 @@ export interface ExtensionMessageState {
   stuckAgents: Set<number>;
   totalCost: number;
   closedSessions: ClosedSession[];
+  textPreviews: Record<number, { text: string; timestamp: number }>;
 }
 
 function saveAgentSeats(os: OfficeState): void {
@@ -145,6 +147,7 @@ export function useExtensionMessages(
   const [stuckAgents, setStuckAgents] = useState<Set<number>>(new Set());
   const [totalCost, setTotalCost] = useState(0);
   const [closedSessions, setClosedSessions] = useState<ClosedSession[]>([]);
+  const [textPreviews, setTextPreviews] = useState<Record<number, { text: string; timestamp: number }>>({});
   const closedCostRef = useRef(0);
 
   const layoutReadyRef = useRef(false);
@@ -241,6 +244,8 @@ export function useExtensionMessages(
         setSelectedAgent(id);
         os.addAgent(id, undefined, undefined, undefined, undefined, label);
         saveAgentSeats(os);
+        playSpawnSound();
+        sendBrowserNotification('New agent', `New agent: ${label || 'Agent #' + id}`, id);
       } else if (msg.type === 'agentClosed') {
         const id = msg.id as number;
         // Accumulate cost and save to closed sessions before removing info
@@ -394,6 +399,8 @@ export function useExtensionMessages(
         if (status === 'waiting') {
           os.showWaitingBubble(id);
           playDoneSound();
+          const info = agentInfos[id];
+          sendBrowserNotification('Agent finished', `Agent ${info?.slug || info?.label || id} finished`, id);
         }
       } else if (msg.type === 'agentToolPermission') {
         const id = msg.id as number;
@@ -407,6 +414,8 @@ export function useExtensionMessages(
         });
         os.showPermissionBubble(id);
         playAlertSound();
+        const pInfo = agentInfos[id];
+        sendBrowserNotification('Permission needed', `Agent ${pInfo?.slug || pInfo?.label || id} needs permission`, id);
       } else if (msg.type === 'subagentToolPermission') {
         const id = msg.id as number;
         const parentToolId = msg.parentToolId as string;
@@ -526,6 +535,13 @@ export function useExtensionMessages(
           next.add(id);
           return next;
         });
+        playStuckSound();
+        const sInfo = agentInfos[id];
+        sendBrowserNotification('Agent stuck', `Agent ${sInfo?.slug || sInfo?.label || id} may be stuck`, id);
+      } else if (msg.type === 'agentTextPreview') {
+        const id = msg.id as number;
+        const text = msg.text as string;
+        setTextPreviews((prev) => ({ ...prev, [id]: { text, timestamp: Date.now() } }));
       }
     });
 
@@ -547,5 +563,6 @@ export function useExtensionMessages(
     stuckAgents,
     totalCost,
     closedSessions,
+    textPreviews,
   };
 }

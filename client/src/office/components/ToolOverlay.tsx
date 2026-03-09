@@ -17,6 +17,7 @@ interface ToolOverlayProps {
   panRef: React.RefObject<{ x: number; y: number }>;
   onCloseAgent: (id: number) => void;
   stuckAgents: Set<number>;
+  textPreviews?: Record<number, { text: string; timestamp: number }>;
 }
 
 const ROLE_COLORS: Record<string, string> = {
@@ -59,6 +60,7 @@ export function ToolOverlay({
   panRef,
   onCloseAgent,
   stuckAgents,
+  textPreviews,
 }: ToolOverlayProps) {
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -193,10 +195,26 @@ export function ToolOverlay({
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     display: 'block',
+                    fontWeight: 'bold',
                   }}
                 >
                   {activityText}
                 </span>
+                {!isSub && textPreviews?.[id] && (Date.now() - textPreviews[id].timestamp < 5000) && (
+                  <span
+                    style={{
+                      fontSize: '16px',
+                      color: 'var(--pixel-text-dim)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: 'block',
+                      whiteSpace: 'nowrap',
+                      opacity: Math.max(0, 1 - (Date.now() - textPreviews[id].timestamp) / 5000),
+                    }}
+                  >
+                    {textPreviews[id].text}
+                  </span>
+                )}
                 {!isSub && displayLabel && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span
