@@ -82,6 +82,8 @@ export const transport = {
 
   onConnectionChange(handler: (connected: boolean) => void): void {
     _onConnectionChange = handler;
+    // Fire immediately with current state so React catches up
+    handler(_connected);
   },
 };
 
