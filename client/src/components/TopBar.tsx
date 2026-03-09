@@ -10,7 +10,7 @@ export function TopBar({ activeAgents, toolsRunning, sessionsToday }: TopBarProp
       style={{
         position: 'absolute',
         top: 8,
-        left: 8,
+        left: 56,
         zIndex: 'var(--pixel-controls-z)' as unknown as number,
         display: 'flex',
         alignItems: 'center',
