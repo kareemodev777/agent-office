@@ -1,6 +1,9 @@
 {
   "name": "agent-office",
-  "version": "4.0.0",
+  "version": "5.0.0",
+  "description": "Real-time dashboard that visualizes AI coding agents as pixel-art characters in a virtual office",
+  "author": "Abdul Kareem Abdulghani",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
