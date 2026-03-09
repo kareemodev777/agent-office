@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { CHARACTER_SITTING_OFFSET_PX, TOOL_OVERLAY_VERTICAL_OFFSET } from '../../constants.js';
-import type { SubagentCharacter } from '../../hooks/useExtensionMessages.js';
+import type { AgentInfo, SubagentCharacter } from '../../hooks/useExtensionMessages.js';
 import type { OfficeState } from '../engine/officeState.js';
 import type { ToolActivity } from '../types.js';
 import { CharacterState, TILE_SIZE } from '../types.js';
@@ -10,12 +10,22 @@ interface ToolOverlayProps {
   officeState: OfficeState;
   agents: number[];
   agentTools: Record<number, ToolActivity[]>;
+  agentInfos: Record<number, AgentInfo>;
   subagentCharacters: SubagentCharacter[];
   containerRef: React.RefObject<HTMLDivElement | null>;
   zoom: number;
   panRef: React.RefObject<{ x: number; y: number }>;
   onCloseAgent: (id: number) => void;
+  stuckAgents: Set<number>;
 }
+
+const ROLE_COLORS: Record<string, string> = {
+  architect: '#7ec8e3',
+  builder: '#a8d8a8',
+  reviewer: '#c8a8e8',
+  tester: '#e8c87e',
+  documenter: '#8ee8d8',
+};
 
 /** Derive a short human-readable activity string from tools/status */
 function getActivityText(
@@ -25,19 +35,16 @@ function getActivityText(
 ): string {
   const tools = agentTools[agentId];
   if (tools && tools.length > 0) {
-    // Find the latest non-done tool
     const activeTool = [...tools].reverse().find((t) => !t.done);
     if (activeTool) {
       if (activeTool.permissionWait) return 'Needs approval';
       return activeTool.status;
     }
-    // All tools done but agent still active (mid-turn) — keep showing last tool status
     if (isActive) {
       const lastTool = tools[tools.length - 1];
       if (lastTool) return lastTool.status;
     }
   }
-
   return 'Idle';
 }
 
@@ -45,11 +52,13 @@ export function ToolOverlay({
   officeState,
   agents,
   agentTools,
+  agentInfos,
   subagentCharacters,
   containerRef,
   zoom,
   panRef,
   onCloseAgent,
+  stuckAgents,
 }: ToolOverlayProps) {
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -77,7 +86,6 @@ export function ToolOverlay({
   const selectedId = officeState.selectedAgentId;
   const hoveredId = officeState.hoveredAgentId;
 
-  // All character IDs
   const allIds = [...agents, ...subagentCharacters.map((s) => s.id)];
 
   return (
@@ -89,17 +97,15 @@ export function ToolOverlay({
         const isSelected = selectedId === id;
         const isHovered = hoveredId === id;
         const isSub = ch.isSubagent;
+        const isStuck = stuckAgents.has(id);
 
-        // Only show for hovered or selected agents
         if (!isSelected && !isHovered) return null;
 
-        // Position above character
         const sittingOffset = ch.state === CharacterState.TYPE ? CHARACTER_SITTING_OFFSET_PX : 0;
         const screenX = (deviceOffsetX + ch.x * zoom) / dpr;
         const screenY =
           (deviceOffsetY + (ch.y + sittingOffset - TOOL_OVERLAY_VERTICAL_OFFSET) * zoom) / dpr;
 
-        // Get activity text
         const subHasPermission = isSub && ch.bubbleType === 'permission';
         let activityText: string;
         if (isSub) {
@@ -113,7 +119,6 @@ export function ToolOverlay({
           activityText = getActivityText(id, agentTools, ch.isActive);
         }
 
-        // Determine dot color
         const tools = agentTools[id];
         const hasPermission = subHasPermission || tools?.some((t) => t.permissionWait && !t.done);
         const hasActiveTools = tools?.some((t) => !t.done);
@@ -125,6 +130,11 @@ export function ToolOverlay({
         } else if (isActive && hasActiveTools) {
           dotColor = 'var(--pixel-status-active)';
         }
+
+        const info = agentInfos[id];
+        const role = info?.role;
+        const roleColor = role ? ROLE_COLORS[role] : undefined;
+        const displayLabel = info?.slug || info?.label;
 
         return (
           <div
@@ -154,7 +164,7 @@ export function ToolOverlay({
                 padding: isSelected ? '3px 6px 3px 8px' : '3px 8px',
                 boxShadow: 'var(--pixel-shadow)',
                 whiteSpace: 'nowrap',
-                maxWidth: 220,
+                maxWidth: 240,
               }}
             >
               {dotColor && (
@@ -169,6 +179,11 @@ export function ToolOverlay({
                   }}
                 />
               )}
+              {isStuck && (
+                <span style={{ fontSize: '14px', flexShrink: 0 }} title="Agent may be stuck">
+                  Stuck?
+                </span>
+              )}
               <div style={{ overflow: 'hidden' }}>
                 <span
                   style={{
@@ -182,7 +197,37 @@ export function ToolOverlay({
                 >
                   {activityText}
                 </span>
-                {ch.folderName && (
+                {!isSub && displayLabel && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span
+                      style={{
+                        fontSize: '16px',
+                        color: 'var(--pixel-text-dim)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {displayLabel}
+                    </span>
+                    {role && roleColor && (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: roleColor,
+                          border: `1px solid ${roleColor}`,
+                          padding: '0 3px',
+                          borderRadius: 2,
+                          textTransform: 'uppercase',
+                          lineHeight: '14px',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {role}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {isSub && ch.folderName && (
                   <span
                     style={{
                       fontSize: '16px',

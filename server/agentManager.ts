@@ -4,39 +4,52 @@ import * as path from 'path';
 import { cancelPermissionTimer, cancelWaitingTimer } from './timerManager.js';
 import { processTranscriptLine } from './parser.js';
 import type { AgentState } from './types.js';
+import { WebSocket } from 'ws';
+import { STUCK_TIMEOUT_MS } from './constants.js';
 
 type BroadcastFn = (msg: unknown) => void;
 
 let nextAgentId = 1;
 
-// Map from JSONL file path → AgentState
 const agents = new Map<number, AgentState>();
 const agentsByFile = new Map<string, number>();
 const waitingTimers = new Map<number, ReturnType<typeof setTimeout>>();
 const permissionTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
+// Live inspect subscriptions: agentId → set of WebSocket clients
+const inspectSubscriptions = new Map<number, Set<WebSocket>>();
+
+// Track all sessions seen today for stats
+const sessionsSeenToday = new Set<number>();
+let sessionDayStart = getStartOfDay();
+
+function getStartOfDay(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
 export function getAgents(): Map<number, AgentState> {
   return agents;
 }
 
+export function getAgentById(id: number): AgentState | undefined {
+  return agents.get(id);
+}
+
 export function deriveLabel(jsonlPath: string): string {
-  // Path like: ~/.claude/projects/-Users-kareemo-Projects-myapp/session.jsonl
-  // dirName looks like: -Users-kareemo-Projects-myapp
   const dir = path.dirname(jsonlPath);
   const dirName = path.basename(dir);
 
-  // Try to extract project name after common path markers
   const markers = ['Projects', 'projects', 'repos', 'src', 'code', 'dev', 'workspace'];
   for (const marker of markers) {
     const idx = dirName.indexOf(marker);
     if (idx !== -1) {
-      // Everything after the marker is the project name (may include hyphens)
-      const after = dirName.slice(idx + marker.length + 1); // +1 for the dash
+      const after = dirName.slice(idx + marker.length + 1);
       if (after) return after;
     }
   }
 
-  // Fallback: take last segment after splitting on common path separators
   const parts = dirName.split('-').filter(Boolean);
   return parts[parts.length - 1] || dirName;
 }
@@ -60,7 +73,6 @@ function getOpenClawLabel(jsonlFile: string): string | null {
 }
 
 export function addAgent(jsonlFile: string, broadcast: BroadcastFn): number {
-  // Check if we already track this file
   const existingId = agentsByFile.get(jsonlFile);
   if (existingId !== undefined && agents.has(existingId)) {
     return existingId;
@@ -69,9 +81,13 @@ export function addAgent(jsonlFile: string, broadcast: BroadcastFn): number {
   const id = nextAgentId++;
   const openclawLabel = getOpenClawLabel(jsonlFile);
   const label = openclawLabel || deriveLabel(jsonlFile);
+  const now = Date.now();
   const agent: AgentState = {
     id,
     label,
+    slug: null,
+    role: null,
+    gitBranch: null,
     jsonlFile,
     fileOffset: 0,
     lineBuffer: '',
@@ -83,10 +99,24 @@ export function addAgent(jsonlFile: string, broadcast: BroadcastFn): number {
     isWaiting: false,
     permissionSent: false,
     hadToolsInTurn: false,
+    startedAt: now,
+    lastActivityAt: now,
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheCreationTokens: 0,
+    cacheReadTokens: 0,
   };
 
   agents.set(id, agent);
   agentsByFile.set(jsonlFile, id);
+
+  // Track sessions seen today
+  const today = getStartOfDay();
+  if (today !== sessionDayStart) {
+    sessionsSeenToday.clear();
+    sessionDayStart = today;
+  }
+  sessionsSeenToday.add(id);
 
   // Skip to end of file (only process new lines)
   try {
@@ -110,6 +140,7 @@ export function removeAgent(agentId: number, broadcast: BroadcastFn): void {
 
   agentsByFile.delete(agent.jsonlFile);
   agents.delete(agentId);
+  inspectSubscriptions.delete(agentId);
 
   console.log(`[Agent Office] Agent ${agentId} removed`);
   broadcast({ type: 'agentClosed', id: agentId });
@@ -142,11 +173,25 @@ export function readNewLines(agentId: number, broadcast: BroadcastFn): void {
       }
     }
 
+    const subscribers = inspectSubscriptions.get(agentId);
+
     for (const line of lines) {
       if (!line.trim()) continue;
       processTranscriptLine(agentId, line, agents, waitingTimers, permissionTimers, broadcast);
+
+      // Push to inspect subscribers
+      if (subscribers && subscribers.size > 0) {
+        const data = JSON.stringify({ type: 'inspectLine', id: agentId, line });
+        for (const ws of subscribers) {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(data);
+          } else {
+            subscribers.delete(ws);
+          }
+        }
+      }
     }
-  } catch (e) {
+  } catch {
     // File might have been deleted
   }
 }
@@ -165,7 +210,88 @@ export function getRecentLines(agentId: number, count: number): string[] {
   } catch { return []; }
 }
 
-export function getSnapshot(): Array<{ id: number; label: string; isWaiting: boolean; tools: Array<{ toolId: string; status: string }> }> {
+export function getFullTranscript(agentId: number): string {
+  const agent = agents.get(agentId);
+  if (!agent) return '';
+  try {
+    return fs.readFileSync(agent.jsonlFile, 'utf-8');
+  } catch { return ''; }
+}
+
+// Inspect subscriptions
+export function subscribeInspect(agentId: number, ws: WebSocket): void {
+  let subs = inspectSubscriptions.get(agentId);
+  if (!subs) {
+    subs = new Set();
+    inspectSubscriptions.set(agentId, subs);
+  }
+  subs.add(ws);
+}
+
+export function unsubscribeInspect(agentId: number, ws: WebSocket): void {
+  const subs = inspectSubscriptions.get(agentId);
+  if (subs) {
+    subs.delete(ws);
+    if (subs.size === 0) inspectSubscriptions.delete(agentId);
+  }
+}
+
+export function unsubscribeAllInspect(ws: WebSocket): void {
+  for (const [, subs] of inspectSubscriptions) {
+    subs.delete(ws);
+  }
+}
+
+// Stats
+export function getStats(): { activeAgents: number; toolsRunning: number; sessionsToday: number } {
+  const today = getStartOfDay();
+  if (today !== sessionDayStart) {
+    sessionsSeenToday.clear();
+    sessionDayStart = today;
+  }
+  for (const agent of agents.values()) {
+    sessionsSeenToday.add(agent.id);
+  }
+
+  let toolsRunning = 0;
+  for (const agent of agents.values()) {
+    toolsRunning += agent.activeToolIds.size;
+    for (const subTools of agent.activeSubagentToolIds.values()) {
+      toolsRunning += subTools.size;
+    }
+  }
+
+  return {
+    activeAgents: agents.size,
+    toolsRunning,
+    sessionsToday: sessionsSeenToday.size,
+  };
+}
+
+// Stuck detection
+export function checkStuckAgents(broadcast: BroadcastFn): void {
+  const now = Date.now();
+  for (const agent of agents.values()) {
+    if (agent.activeToolIds.size > 0 && now - agent.lastActivityAt > STUCK_TIMEOUT_MS) {
+      broadcast({ type: 'agentStuck', id: agent.id });
+    }
+  }
+}
+
+export function getSnapshot(): Array<{
+  id: number;
+  label: string;
+  slug: string | null;
+  role: string | null;
+  gitBranch: string | null;
+  isWaiting: boolean;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  startedAt: number;
+  tools: Array<{ toolId: string; status: string }>;
+}> {
   const result = [];
   for (const agent of agents.values()) {
     const tools = [];
@@ -175,7 +301,15 @@ export function getSnapshot(): Array<{ id: number; label: string; isWaiting: boo
     result.push({
       id: agent.id,
       label: agent.label,
+      slug: agent.slug,
+      role: agent.role,
+      gitBranch: agent.gitBranch,
       isWaiting: agent.isWaiting,
+      inputTokens: agent.inputTokens,
+      outputTokens: agent.outputTokens,
+      cacheCreationTokens: agent.cacheCreationTokens,
+      cacheReadTokens: agent.cacheReadTokens,
+      startedAt: agent.startedAt,
       tools,
     });
   }

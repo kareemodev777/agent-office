@@ -1,8 +1,11 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 
 import { BottomToolbar } from './components/BottomToolbar.js';
+import { ContextMenu } from './components/ContextMenu.js';
 import { DebugView } from './components/DebugView.js';
 import { InspectPanel } from './components/InspectPanel.js';
+import { SpawnDialog } from './components/SpawnDialog.js';
+import { TopBar } from './components/TopBar.js';
 import { ZoomControls } from './components/ZoomControls.js';
 import { PULSE_ANIMATION_DURATION_SEC } from './constants.js';
 import { useEditorActions } from './hooks/useEditorActions.js';
@@ -122,7 +125,6 @@ function EditActionBar({
 function App() {
   const editor = useEditorActions(getOfficeState, editorState);
   const [connected, setConnected] = useState(transport.connected);
-  const [totalSessions, setTotalSessions] = useState(0);
 
   useEffect(() => {
     transport.onConnectionChange(setConnected);
@@ -135,6 +137,7 @@ function App() {
 
   const {
     agents,
+    agentInfos,
     selectedAgent,
     agentTools,
     agentStatuses,
@@ -143,18 +146,17 @@ function App() {
     layoutReady,
     loadedAssets,
     workspaceFolders,
+    stats,
+    stuckAgents,
   } = useExtensionMessages(getOfficeState, editor.setLastSavedLayout, isEditDirty);
-
-  // Track total sessions seen
-  useEffect(() => {
-    setTotalSessions((prev) => Math.max(prev, agents.length));
-  }, [agents]);
 
   const [isDebugMode, setIsDebugMode] = useState(false);
   const handleToggleDebugMode = useCallback(() => setIsDebugMode((prev) => !prev), []);
   const [inspectAgentId, setInspectAgentId] = useState<number | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; agentId: number } | null>(null);
+  const [showSpawnDialog, setShowSpawnDialog] = useState(false);
 
-  const handleSelectAgent = useCallback((id: number) => {
+  const handleSelectAgent = useCallback((_id: number) => {
     // No-op in standalone (no terminal to focus)
   }, []);
 
@@ -181,10 +183,50 @@ function App() {
     const os = getOfficeState();
     const meta = os.subagentMeta.get(agentId);
     const focusId = meta ? meta.parentAgentId : agentId;
-    // Select the agent (no terminal focus in standalone)
     os.selectedAgentId = focusId;
-    // Open inspect panel for the clicked agent (use parent for sub-agents)
     setInspectAgentId(focusId);
+  }, []);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const os = getOfficeState();
+    // Find character at click position
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const dpr = window.devicePixelRatio || 1;
+    const layout = os.getLayout();
+    const canvasW = Math.round(rect.width * dpr);
+    const canvasH = Math.round(rect.height * dpr);
+    const zoom = editor.zoom;
+    const mapW = layout.cols * 16 * zoom;
+    const mapH = layout.rows * 16 * zoom;
+    const offsetX = Math.floor((canvasW - mapW) / 2) + Math.round(editor.panRef.current.x);
+    const offsetY = Math.floor((canvasH - mapH) / 2) + Math.round(editor.panRef.current.y);
+    const worldX = ((e.clientX - rect.left) * dpr - offsetX) / zoom;
+    const worldY = ((e.clientY - rect.top) * dpr - offsetY) / zoom;
+    const charId = os.getCharacterAt(worldX, worldY);
+    if (charId !== null && charId >= 0) {
+      setContextMenu({ x: e.clientX, y: e.clientY, agentId: charId });
+    }
+  }, [editor.zoom, editor.panRef]);
+
+  const handleKillAgent = useCallback((id: number) => {
+    transport.postMessage({ type: 'killAgent', id });
+  }, []);
+
+  const handleCopyTranscript = useCallback((id: number) => {
+    transport.postMessage({ type: 'getTranscript', id });
+    const unsub = transport.onMessage((msg: Record<string, unknown>) => {
+      if (msg.type === 'transcript' && msg.id === id) {
+        navigator.clipboard.writeText(msg.content as string).catch(() => {});
+        unsub();
+      }
+    });
+    setTimeout(unsub, 5000);
+  }, []);
+
+  const handleSpawnAgent = useCallback((cwd: string, prompt: string) => {
+    transport.postMessage({ type: 'spawnAgent', cwd, prompt });
   }, []);
 
   const officeState = getOfficeState();
@@ -208,10 +250,13 @@ function App() {
       return false;
     })();
 
+  const inspectInfo = inspectAgentId !== null ? agentInfos[inspectAgentId] : undefined;
+
   return (
     <div
       ref={containerRef}
       style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}
+      onContextMenu={handleContextMenu}
     >
       <style>{`
         @keyframes pixel-agents-pulse {
@@ -251,6 +296,15 @@ function App() {
         }}
       />
 
+      {/* Top stats bar */}
+      {!editor.isEditMode && (
+        <TopBar
+          activeAgents={stats.activeAgents}
+          toolsRunning={stats.toolsRunning}
+          sessionsToday={stats.sessionsToday}
+        />
+      )}
+
       {/* Connection status indicator */}
       <div
         style={{
@@ -288,6 +342,7 @@ function App() {
         isDebugMode={isDebugMode}
         onToggleDebugMode={handleToggleDebugMode}
         workspaceFolders={workspaceFolders}
+        onSpawnAgent={() => setShowSpawnDialog(true)}
       />
 
       {/* Status bar */}
@@ -310,7 +365,7 @@ function App() {
       >
         <span>{agents.length} active</span>
         <span style={{ color: 'var(--pixel-border-light)' }}>|</span>
-        <span>{totalSessions} total</span>
+        <span>{stats.sessionsToday} today</span>
       </div>
 
       {editor.isEditMode && editor.isDirty && (
@@ -370,11 +425,13 @@ function App() {
         officeState={officeState}
         agents={agents}
         agentTools={agentTools}
+        agentInfos={agentInfos}
         subagentCharacters={subagentCharacters}
         containerRef={containerRef}
         zoom={editor.zoom}
         panRef={editor.panRef}
         onCloseAgent={handleCloseAgent}
+        stuckAgents={stuckAgents}
       />
 
       {isDebugMode && (
@@ -391,7 +448,44 @@ function App() {
       {inspectAgentId !== null && (
         <InspectPanel
           agentId={inspectAgentId}
-          onClose={() => setInspectAgentId(null)}
+          agentLabel={inspectInfo?.label}
+          agentRole={inspectInfo?.role}
+          onClose={() => {
+            setInspectAgentId(null);
+            transport.postMessage({ type: 'unsubscribeAgent', id: inspectAgentId });
+          }}
+        />
+      )}
+
+      {/* Context menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          items={[
+            {
+              label: 'Inspect',
+              action: () => setInspectAgentId(contextMenu.agentId),
+            },
+            {
+              label: 'Copy Transcript',
+              action: () => handleCopyTranscript(contextMenu.agentId),
+            },
+            {
+              label: 'Kill Agent',
+              action: () => handleKillAgent(contextMenu.agentId),
+              danger: true,
+            },
+          ]}
+        />
+      )}
+
+      {/* Spawn dialog */}
+      {showSpawnDialog && (
+        <SpawnDialog
+          onSpawn={handleSpawnAgent}
+          onClose={() => setShowSpawnDialog(false)}
         />
       )}
     </div>

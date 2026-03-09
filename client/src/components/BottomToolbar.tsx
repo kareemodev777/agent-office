@@ -11,6 +11,7 @@ interface BottomToolbarProps {
   isDebugMode: boolean;
   onToggleDebugMode: () => void;
   workspaceFolders: WorkspaceFolder[];
+  onSpawnAgent?: () => void;
 }
 
 const panelStyle: React.CSSProperties = {
@@ -51,6 +52,7 @@ export function BottomToolbar({
   isDebugMode,
   onToggleDebugMode,
   workspaceFolders,
+  onSpawnAgent,
 }: BottomToolbarProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -146,6 +148,20 @@ export function BottomToolbar({
           </div>
         )}
       </div>
+      {onSpawnAgent && (
+        <button
+          onClick={onSpawnAgent}
+          onMouseEnter={() => setHovered('spawn')}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            ...btnBase,
+            background: hovered === 'spawn' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+          }}
+          title="Spawn a new agent with a prompt"
+        >
+          Spawn
+        </button>
+      )}
       <button
         onClick={onToggleEditMode}
         onMouseEnter={() => setHovered('edit')}

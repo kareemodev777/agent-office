@@ -12,11 +12,27 @@ import {
   startPermissionTimer,
   startWaitingTimer,
 } from './timerManager.js';
-import type { AgentState } from './types.js';
+import type { AgentRole, AgentState } from './types.js';
 
 type BroadcastFn = (msg: unknown) => void;
 
 export const PERMISSION_EXEMPT_TOOLS = new Set(['Task', 'AskUserQuestion']);
+
+// Role detection patterns for Task tool descriptions
+const ROLE_PATTERNS: Array<{ role: AgentRole; keywords: RegExp }> = [
+  { role: 'architect', keywords: /\b(architect|explore|analyz)/i },
+  { role: 'builder', keywords: /\b(build|implement|creat|writ)/i },
+  { role: 'reviewer', keywords: /\b(review|check|verif)/i },
+  { role: 'tester', keywords: /\b(test|spec|coverage)/i },
+  { role: 'documenter', keywords: /\b(document|readme|docs)\b/i },
+];
+
+export function detectRole(description: string): AgentRole {
+  for (const { role, keywords } of ROLE_PATTERNS) {
+    if (keywords.test(description)) return role;
+  }
+  return null;
+}
 
 export function formatToolStatus(toolName: string, input: Record<string, unknown>): string {
   const base = (p: unknown) => (typeof p === 'string' ? path.basename(p) : '');
@@ -56,6 +72,47 @@ export function formatToolStatus(toolName: string, input: Record<string, unknown
   }
 }
 
+/**
+ * Extract metadata fields (slug, gitBranch, usage) from a JSONL record
+ * and update the agent state. Returns true if label changed.
+ */
+export function extractMetadata(
+  record: Record<string, unknown>,
+  agent: AgentState,
+  broadcast: BroadcastFn,
+): void {
+  // Extract slug (session name)
+  if (typeof record.slug === 'string' && record.slug && agent.slug !== record.slug) {
+    agent.slug = record.slug;
+    agent.label = record.slug;
+    broadcast({
+      type: 'agentLabelUpdate',
+      id: agent.id,
+      label: agent.label,
+      slug: agent.slug,
+    });
+  }
+
+  // Extract git branch
+  if (typeof record.gitBranch === 'string' && record.gitBranch) {
+    agent.gitBranch = record.gitBranch;
+  }
+
+  // Extract token usage from assistant messages
+  if (record.type === 'assistant') {
+    const usage = (record.message as Record<string, unknown>)?.usage as Record<string, number> | undefined;
+    if (usage) {
+      if (usage.input_tokens) agent.inputTokens += usage.input_tokens;
+      if (usage.output_tokens) agent.outputTokens += usage.output_tokens;
+      if (usage.cache_creation_input_tokens) agent.cacheCreationTokens += usage.cache_creation_input_tokens;
+      if (usage.cache_read_input_tokens) agent.cacheReadTokens += usage.cache_read_input_tokens;
+    }
+  }
+
+  // Update last activity timestamp
+  agent.lastActivityAt = Date.now();
+}
+
 export function processTranscriptLine(
   agentId: number,
   line: string,
@@ -68,6 +125,9 @@ export function processTranscriptLine(
   if (!agent) return;
   try {
     const record = JSON.parse(line);
+
+    // Extract metadata from every record
+    extractMetadata(record, agent, broadcast);
 
     if (record.type === 'assistant' && Array.isArray(record.message?.content)) {
       const blocks = record.message.content as Array<{
@@ -101,6 +161,21 @@ export function processTranscriptLine(
               toolId: block.id,
               status,
             });
+
+            // Detect role from Task tool descriptions
+            if (toolName === 'Task' && !agent.role && block.input) {
+              const desc = typeof block.input.description === 'string' ? block.input.description : '';
+              const prompt = typeof block.input.prompt === 'string' ? block.input.prompt : '';
+              const detected = detectRole(desc) || detectRole(prompt);
+              if (detected) {
+                agent.role = detected;
+                broadcast({
+                  type: 'agentRoleUpdate',
+                  id: agentId,
+                  role: detected,
+                });
+              }
+            }
           }
         }
         if (hasNonExemptTool) {

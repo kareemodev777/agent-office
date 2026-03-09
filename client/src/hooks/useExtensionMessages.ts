@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { playDoneSound } from '../notificationSound.js';
+import { playDoneSound, playAlertSound } from '../notificationSound.js';
 import type { OfficeState } from '../office/engine/officeState.js';
 import { extractToolName } from '../office/toolUtils.js';
 import type { OfficeLayout, ToolActivity } from '../office/types.js';
@@ -36,8 +36,19 @@ export interface WorkspaceFolder {
   path: string;
 }
 
+export interface AgentInfo {
+  label: string;
+  slug: string | null;
+  role: string | null;
+  gitBranch: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  startedAt: number;
+}
+
 export interface ExtensionMessageState {
   agents: number[];
+  agentInfos: Record<number, AgentInfo>;
   selectedAgent: number | null;
   agentTools: Record<number, ToolActivity[]>;
   agentStatuses: Record<number, string>;
@@ -46,6 +57,8 @@ export interface ExtensionMessageState {
   layoutReady: boolean;
   loadedAssets?: { catalog: FurnitureAsset[]; sprites: Record<string, string[][]> };
   workspaceFolders: WorkspaceFolder[];
+  stats: { activeAgents: number; toolsRunning: number; sessionsToday: number };
+  stuckAgents: Set<number>;
 }
 
 function saveAgentSeats(os: OfficeState): void {
@@ -71,12 +84,22 @@ function loadAgentSeats(): Record<number, { palette?: number; hueShift?: number;
   return {};
 }
 
+// Role → hue shift for character tinting
+const ROLE_HUE_SHIFTS: Record<string, number> = {
+  architect: 210,   // blue
+  builder: 120,     // green
+  reviewer: 270,    // purple
+  tester: 30,       // orange
+  documenter: 180,  // cyan
+};
+
 export function useExtensionMessages(
   getOfficeState: () => OfficeState,
   onLayoutLoaded?: (layout: OfficeLayout) => void,
   isEditDirty?: () => boolean,
 ): ExtensionMessageState {
   const [agents, setAgents] = useState<number[]>([]);
+  const [agentInfos, setAgentInfos] = useState<Record<number, AgentInfo>>({});
   const [selectedAgent, setSelectedAgent] = useState<number | null>(null);
   const [agentTools, setAgentTools] = useState<Record<number, ToolActivity[]>>({});
   const [agentStatuses, setAgentStatuses] = useState<Record<number, string>>({});
@@ -85,6 +108,8 @@ export function useExtensionMessages(
   >({});
   const [subagentCharacters, setSubagentCharacters] = useState<SubagentCharacter[]>([]);
   const [layoutReady, setLayoutReady] = useState(false);
+  const [stats, setStats] = useState({ activeAgents: 0, toolsRunning: 0, sessionsToday: 0 });
+  const [stuckAgents, setStuckAgents] = useState<Set<number>>(new Set());
 
   const layoutReadyRef = useRef(false);
 
@@ -92,7 +117,6 @@ export function useExtensionMessages(
     // Initialize layout immediately (no VS Code layout loading)
     const os = getOfficeState();
     if (!layoutReadyRef.current) {
-      // Try loading layout from localStorage
       try {
         const saved = localStorage.getItem('agent-office-layout');
         if (saved) {
@@ -109,24 +133,38 @@ export function useExtensionMessages(
       setLayoutReady(true);
     }
 
-    const unsubscribe = transport.onMessage((msg: any) => {
+    const unsubscribe = transport.onMessage((msg: Record<string, unknown>) => {
       const os = getOfficeState();
 
       if (msg.type === 'snapshot') {
-        // Initial snapshot from server
         const incoming = msg.agents as Array<{
           id: number;
           label: string;
+          slug: string | null;
+          role: string | null;
+          gitBranch: string | null;
           isWaiting: boolean;
+          inputTokens: number;
+          outputTokens: number;
+          startedAt: number;
           tools: Array<{ toolId: string; status: string }>;
         }>;
         const meta = loadAgentSeats();
         const ids: number[] = [];
+        const infos: Record<number, AgentInfo> = {};
         for (const a of incoming) {
           ids.push(a.id);
+          infos[a.id] = {
+            label: a.label,
+            slug: a.slug,
+            role: a.role,
+            gitBranch: a.gitBranch,
+            inputTokens: a.inputTokens,
+            outputTokens: a.outputTokens,
+            startedAt: a.startedAt,
+          };
           const m = meta[a.id];
           os.addAgent(a.id, m?.palette, m?.hueShift, m?.seatId, true, a.label);
-          // Restore tool states
           for (const tool of a.tools) {
             const toolName = extractToolName(tool.status);
             os.setAgentTool(a.id, toolName);
@@ -138,6 +176,7 @@ export function useExtensionMessages(
           }
         }
         setAgents(ids);
+        setAgentInfos(infos);
         if (ids.length > 0) {
           saveAgentSeats(os);
         }
@@ -145,6 +184,18 @@ export function useExtensionMessages(
         const id = msg.id as number;
         const label = msg.label as string | undefined;
         setAgents((prev) => (prev.includes(id) ? prev : [...prev, id]));
+        setAgentInfos((prev) => ({
+          ...prev,
+          [id]: {
+            label: label || `Agent #${id}`,
+            slug: null,
+            role: null,
+            gitBranch: null,
+            inputTokens: 0,
+            outputTokens: 0,
+            startedAt: Date.now(),
+          },
+        }));
         setSelectedAgent(id);
         os.addAgent(id, undefined, undefined, undefined, undefined, label);
         saveAgentSeats(os);
@@ -170,9 +221,44 @@ export function useExtensionMessages(
           delete next[id];
           return next;
         });
+        setAgentInfos((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
         os.removeAllSubagents(id);
         setSubagentCharacters((prev) => prev.filter((s) => s.parentAgentId !== id));
         os.removeAgent(id);
+        setStuckAgents((prev) => {
+          if (!prev.has(id)) return prev;
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      } else if (msg.type === 'agentLabelUpdate') {
+        const id = msg.id as number;
+        const label = msg.label as string;
+        const slug = msg.slug as string;
+        setAgentInfos((prev) => ({
+          ...prev,
+          [id]: { ...prev[id], label, slug },
+        }));
+        // Update character folderName
+        const ch = os.characters.get(id);
+        if (ch) ch.folderName = label;
+      } else if (msg.type === 'agentRoleUpdate') {
+        const id = msg.id as number;
+        const role = msg.role as string;
+        setAgentInfos((prev) => ({
+          ...prev,
+          [id]: { ...prev[id], role },
+        }));
+        // Apply role-based hue shift to character
+        const hueShift = ROLE_HUE_SHIFTS[role];
+        if (hueShift !== undefined) {
+          const ch = os.characters.get(id);
+          if (ch) ch.hueShift = hueShift;
+        }
       } else if (msg.type === 'agentToolStart') {
         const id = msg.id as number;
         const toolId = msg.toolId as string;
@@ -186,6 +272,13 @@ export function useExtensionMessages(
         os.setAgentTool(id, toolName);
         os.setAgentActive(id, true);
         os.clearPermissionBubble(id);
+        // Clear stuck status on activity
+        setStuckAgents((prev) => {
+          if (!prev.has(id)) return prev;
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         if (status.startsWith('Subtask:')) {
           const label = status.slice('Subtask:'.length).trim();
           const subId = os.addSubagent(id, toolId);
@@ -251,6 +344,7 @@ export function useExtensionMessages(
           };
         });
         os.showPermissionBubble(id);
+        playAlertSound();
       } else if (msg.type === 'subagentToolPermission') {
         const id = msg.id as number;
         const parentToolId = msg.parentToolId as string;
@@ -332,6 +426,20 @@ export function useExtensionMessages(
         setSubagentCharacters((prev) =>
           prev.filter((s) => !(s.parentAgentId === id && s.parentToolId === parentToolId)),
         );
+      } else if (msg.type === 'stats') {
+        setStats({
+          activeAgents: msg.activeAgents as number,
+          toolsRunning: msg.toolsRunning as number,
+          sessionsToday: msg.sessionsToday as number,
+        });
+      } else if (msg.type === 'agentStuck') {
+        const id = msg.id as number;
+        setStuckAgents((prev) => {
+          if (prev.has(id)) return prev;
+          const next = new Set(prev);
+          next.add(id);
+          return next;
+        });
       }
     });
 
@@ -340,6 +448,7 @@ export function useExtensionMessages(
 
   return {
     agents,
+    agentInfos,
     selectedAgent,
     agentTools,
     agentStatuses,
@@ -348,5 +457,7 @@ export function useExtensionMessages(
     layoutReady,
     loadedAssets: undefined,
     workspaceFolders: [],
+    stats,
+    stuckAgents,
   };
 }

@@ -18,7 +18,7 @@ export function isSoundEnabled(): boolean {
   return soundEnabled;
 }
 
-function playNote(ctx: AudioContext, freq: number, startOffset: number): void {
+function playNote(ctx: AudioContext, freq: number, startOffset: number, volume?: number): void {
   const t = ctx.currentTime + startOffset;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -26,7 +26,7 @@ function playNote(ctx: AudioContext, freq: number, startOffset: number): void {
   osc.type = 'sine';
   osc.frequency.setValueAtTime(freq, t);
 
-  gain.gain.setValueAtTime(NOTIFICATION_VOLUME, t);
+  gain.gain.setValueAtTime(volume ?? NOTIFICATION_VOLUME, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + NOTIFICATION_NOTE_DURATION_SEC);
 
   osc.connect(gain);
@@ -42,13 +42,30 @@ export async function playDoneSound(): Promise<void> {
     if (!audioCtx) {
       audioCtx = new AudioContext();
     }
-    // Resume suspended context (webviews suspend until user gesture)
     if (audioCtx.state === 'suspended') {
       await audioCtx.resume();
     }
-    // Ascending two-note chime: E5 → B5
+    // Ascending two-note chime: E5 → E6
     playNote(audioCtx, NOTIFICATION_NOTE_1_HZ, NOTIFICATION_NOTE_1_START_SEC);
     playNote(audioCtx, NOTIFICATION_NOTE_2_HZ, NOTIFICATION_NOTE_2_START_SEC);
+  } catch {
+    // Audio may not be available
+  }
+}
+
+/** Alert sound for permission waits — descending two-note tone */
+export async function playAlertSound(): Promise<void> {
+  if (!soundEnabled) return;
+  try {
+    if (!audioCtx) {
+      audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+    // Descending: A5 → E5 (attention-grabbing)
+    playNote(audioCtx, 880, 0, 0.12);
+    playNote(audioCtx, 659.25, 0.12, 0.10);
   } catch {
     // Audio may not be available
   }
