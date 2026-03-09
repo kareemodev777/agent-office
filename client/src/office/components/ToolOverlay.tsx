@@ -137,6 +137,8 @@ export function ToolOverlay({
         const role = info?.role;
         const roleColor = role ? ROLE_COLORS[role] : undefined;
         const displayLabel = info?.slug || info?.label;
+        const projectName = info?.label;
+        const showProject = projectName && projectName !== displayLabel;
 
         return (
           <div
@@ -218,7 +220,8 @@ export function ToolOverlay({
                   </span>
                 )}
                 {!isSub && displayLabel && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <span
                       style={{
                         fontSize: 'var(--text-lg)',
@@ -247,6 +250,22 @@ export function ToolOverlay({
                         }}
                       >
                         {role}
+                      </span>
+                    )}
+                    </div>
+                    {showProject && (
+                      <span
+                        style={{
+                          fontSize: 'var(--text-sm)',
+                          fontFamily: 'var(--system-font)',
+                          color: '#c8a8e8',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          opacity: 0.85,
+                        }}
+                      >
+                        {projectName}
                       </span>
                     )}
                   </div>

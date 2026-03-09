@@ -309,6 +309,8 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
   void durationTick; // used to trigger re-render
 
   const displayLabel = meta?.slug || agentLabel || `Agent #${agentId}`;
+  const projectName = agentLabel;
+  const showProject = projectName && projectName !== displayLabel;
   const displayRole = meta?.role || agentRole;
   const roleColor = displayRole ? ROLE_COLORS[displayRole] || 'var(--pixel-text-dim)' : undefined;
 
@@ -339,9 +341,16 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-            <span style={{ fontSize: 'var(--text-xl)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text)', fontWeight: 'bold' }}>
-              {displayLabel}
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: 'var(--text-xl)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text)', fontWeight: 'bold' }}>
+                {displayLabel}
+              </span>
+              {showProject && (
+                <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--system-font)', color: '#c8a8e8' }}>
+                  {projectName}
+                </span>
+              )}
+            </div>
             {displayRole && (
               <span
                 style={{
@@ -389,16 +398,16 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
 
         {/* Metadata row */}
         {meta && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8, fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 10, fontSize: 'var(--text-lg)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
             {meta.gitBranch && (
               <span title="Git branch">
-                <span style={{ color: '#a8d8a8', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>branch</span>{' '}
+                <span style={{ color: '#a8d8a8', fontWeight: 600, marginRight: 4 }}>branch</span>
                 {meta.gitBranch}
               </span>
             )}
             {meta.startedAt > 0 && (
               <span title="Running time">
-                <span style={{ color: '#e8c87e', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>time</span>{' '}
+                <span style={{ color: '#e8c87e', fontWeight: 600, marginRight: 4 }}>time</span>
                 {formatDuration(meta.startedAt)}
               </span>
             )}
@@ -407,17 +416,17 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
 
         {/* Token stats row */}
         {meta && (meta.inputTokens > 0 || meta.outputTokens > 0) && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 4, fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 6, fontSize: 'var(--text-lg)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
             <span>
-              <span style={{ color: '#7ec8e3', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>in</span>{' '}
+              <span style={{ color: '#7ec8e3', fontWeight: 600, marginRight: 4 }}>in</span>
               {formatTokens(meta.inputTokens)}
             </span>
             <span>
-              <span style={{ color: '#a8d8a8', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>out</span>{' '}
+              <span style={{ color: '#a8d8a8', fontWeight: 600, marginRight: 4 }}>out</span>
               {formatTokens(meta.outputTokens)}
             </span>
             <span>
-              <span style={{ color: '#e8c87e', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>cost</span>{' '}
+              <span style={{ color: '#e8c87e', fontWeight: 600, marginRight: 4 }}>cost</span>
               {formatCost(meta.inputTokens, meta.outputTokens)}
             </span>
           </div>
