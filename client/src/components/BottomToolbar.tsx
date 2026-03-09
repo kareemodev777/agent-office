@@ -34,7 +34,7 @@ const panelStyle: React.CSSProperties = {
 
 const btnBase: React.CSSProperties = {
   padding: '8px 16px',
-  fontSize: 'var(--text-base)',
+  fontSize: 'var(--pxfont-sm)',
   fontFamily: 'var(--pixel-font)',
   color: 'var(--pixel-text)',
   background: 'var(--pixel-btn-bg)',

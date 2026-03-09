@@ -122,13 +122,13 @@ export function TopBar({
 
 function Stat({ value, label, color }: { value: number; label: string; color: string }) {
   return (
-    <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
-      <span style={{ color, fontWeight: 'bold', fontSize: 'var(--text-lg)' }}>{value}</span>{' '}
-      <span style={{ fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>{label}</span>
+    <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4 }}>
+      <span style={{ color, fontWeight: 'bold', fontSize: 'var(--pxfont-lg)', fontFamily: 'var(--pixel-font)' }}>{value}</span>
+      <span style={{ fontFamily: 'var(--pixel-font)', fontSize: 'var(--pxfont-sm)', color: 'var(--pixel-text-dim)' }}>{label}</span>
     </span>
   );
 }
 
 function Sep() {
-  return <span style={{ color: 'var(--pixel-border-light)', fontSize: 'var(--text-base)' }}>|</span>;
+  return <span style={{ color: 'var(--pixel-border-light)', fontSize: 'var(--pxfont-base)' }}>|</span>;
 }

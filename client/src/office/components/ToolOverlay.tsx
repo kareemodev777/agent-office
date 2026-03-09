@@ -189,7 +189,7 @@ export function ToolOverlay({
               <div style={{ overflow: 'hidden' }}>
                 <span
                   style={{
-                    fontSize: isSub ? '14px' : '16px',
+                    fontSize: isSub ? 'var(--pxfont-sm)' : 'var(--pxfont-base)',
                     fontFamily: 'var(--system-font)',
                     fontStyle: isSub ? 'italic' : undefined,
                     color: 'var(--pixel-text)',
@@ -204,7 +204,7 @@ export function ToolOverlay({
                 {!isSub && textPreviews?.[id] && (Date.now() - textPreviews[id].timestamp < 5000) && (
                   <span
                     style={{
-                      fontSize: '13px',
+                      fontSize: 'var(--text-base)',
                       fontFamily: 'var(--system-font)',
                       color: 'var(--pixel-text-dim)',
                       overflow: 'hidden',
@@ -221,7 +221,7 @@ export function ToolOverlay({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <span
                       style={{
-                        fontSize: '14px',
+                        fontSize: 'var(--text-lg)',
                         fontFamily: 'var(--system-font)',
                         color: 'var(--pixel-text-dim)',
                         overflow: 'hidden',
@@ -254,7 +254,7 @@ export function ToolOverlay({
                 {isSub && ch.folderName && (
                   <span
                     style={{
-                      fontSize: '13px',
+                      fontSize: 'var(--text-base)',
                       fontFamily: 'var(--system-font)',
                       color: 'var(--pixel-text-dim)',
                       overflow: 'hidden',
@@ -279,7 +279,7 @@ export function ToolOverlay({
                     color: 'var(--pixel-close-text)',
                     cursor: 'pointer',
                     padding: '4px 6px',
-                    fontSize: '18px',
+                    fontSize: 'var(--pxfont-base)',
                     fontFamily: 'var(--system-font)',
                     lineHeight: 1,
                     marginLeft: 2,

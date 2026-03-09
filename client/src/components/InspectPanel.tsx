@@ -370,7 +370,7 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
               color: 'var(--pixel-close-text)',
               cursor: 'pointer',
               padding: '4px 8px',
-              fontSize: '22px',
+              fontSize: 'var(--pxfont-base)',
               fontFamily: 'var(--system-font)',
               lineHeight: 1,
               flexShrink: 0,

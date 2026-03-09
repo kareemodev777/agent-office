@@ -309,7 +309,7 @@ function App() {
   const handleCenterAgent = useCallback((agentId: number) => {
     const os = getOfficeState();
     os.selectedAgentId = agentId;
-    os.cameraFollowId = agentId;
+    // Don't auto-pan camera — user can zoom/scroll manually
   }, []);
 
   const officeState = getOfficeState();
@@ -487,7 +487,8 @@ function App() {
           border: '2px solid var(--pixel-border)',
           padding: '4px 10px',
           boxShadow: 'var(--pixel-shadow)',
-          fontSize: '20px',
+          fontSize: 'var(--pxfont-sm)',
+          fontFamily: 'var(--pixel-font)',
           color: 'var(--pixel-text-dim)',
         }}
       >

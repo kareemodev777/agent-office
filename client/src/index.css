@@ -11,14 +11,21 @@
   --pixel-font: 'FS Pixel Sans', monospace;
   --system-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 
-  /* Size scale */
-  --text-xs: 12px;
-  --text-sm: 13px;
-  --text-base: 14px;
-  --text-lg: 16px;
-  --text-xl: 18px;
-  --text-2xl: 20px;
-  --text-3xl: 24px;
+  /* Size scale — system font */
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 28px;
+
+  /* Size scale — pixel font (renders smaller, needs bigger values) */
+  --pxfont-sm: 20px;
+  --pxfont-base: 22px;
+  --pxfont-lg: 26px;
+  --pxfont-xl: 30px;
+  --pxfont-2xl: 34px;
 
   --pixel-bg: #1e1e2e;
   --pixel-border: #4a4a6a;
