@@ -78,7 +78,7 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: '20px', color: 'var(--pixel-text)' }}>
+        <span style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)' }}>
           Agent Office
         </span>
         <button
@@ -88,8 +88,10 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
             border: '1px solid var(--pixel-border)',
             color: 'var(--pixel-text)',
             cursor: 'pointer',
-            padding: '2px 8px',
-            fontSize: '16px',
+            padding: '6px 14px',
+            fontSize: 'var(--text-base)',
+            fontFamily: 'var(--pixel-font)',
+            minHeight: 32,
           }}
         >
           Office View
@@ -99,7 +101,7 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
       {/* Agent list */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {agents.length === 0 && (
-          <div style={{ padding: 16, textAlign: 'center', fontSize: '18px', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ padding: 16, textAlign: 'center', fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
             No agents running
           </div>
         )}
@@ -142,18 +144,18 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
                   }}
                 />
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <div style={{ fontSize: '16px', color: 'var(--pixel-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {info.slug || info.label}
                   </div>
-                  <div style={{ fontSize: '13px', color: 'var(--pixel-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {currentTool}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: '13px', color: 'var(--pixel-text-dim)' }}>
+                  <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
                     {formatDuration(info.startedAt)}
                   </div>
-                  <div style={{ fontSize: '13px', color: '#c8a8e8' }}>
+                  <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: '#c8a8e8' }}>
                     ${cost.toFixed(2)}
                   </div>
                 </div>
@@ -166,7 +168,7 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
                     background: 'var(--pixel-btn-bg)',
                   }}
                 >
-                  <div style={{ fontSize: '13px', color: 'var(--pixel-text-dim)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     {role && <span style={{ color: ROLE_COLORS[role] || 'var(--pixel-accent)', textTransform: 'uppercase' }}>{role}</span>}
                     {info.gitBranch && <span>branch: {info.gitBranch}</span>}
                     <span>tokens: {formatTokens(totalTokens)}</span>
@@ -179,8 +181,10 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
                       border: '1px solid var(--pixel-border)',
                       color: 'var(--pixel-accent)',
                       cursor: 'pointer',
-                      padding: '2px 8px',
-                      fontSize: '13px',
+                      padding: '6px 12px',
+                      fontSize: 'var(--text-sm)',
+                      fontFamily: 'var(--pixel-font)',
+                      minHeight: 32,
                     }}
                   >
                     Inspect
@@ -203,10 +207,10 @@ export function WidgetMode({ agents, agentInfos, agentTools, totalCost, onInspec
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: '14px', color: 'var(--pixel-text-dim)' }}>
+        <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
           {agents.length} agent{agents.length !== 1 ? 's' : ''} running
         </span>
-        <span style={{ fontSize: '16px', color: '#c8a8e8' }}>
+        <span style={{ fontSize: 'var(--text-lg)', fontFamily: 'var(--system-font)', color: '#c8a8e8' }}>
           Total: ~${totalCost.toFixed(2)}
         </span>
       </div>

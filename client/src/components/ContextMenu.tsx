@@ -37,7 +37,8 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
         background: 'var(--pixel-bg)',
         border: '2px solid var(--pixel-border)',
         boxShadow: 'var(--pixel-shadow)',
-        minWidth: 140,
+        minWidth: 160,
+        borderRadius: 4,
       }}
     >
       {items.map((item, i) => (
@@ -51,8 +52,10 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
             display: 'block',
             width: '100%',
             textAlign: 'left',
-            padding: '6px 12px',
-            fontSize: '20px',
+            padding: '10px 14px',
+            fontSize: 'var(--text-base)',
+            fontFamily: 'var(--system-font)',
+            minHeight: 36,
             color: item.danger ? '#e85050' : 'var(--pixel-text)',
             background: 'transparent',
             border: 'none',

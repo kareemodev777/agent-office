@@ -34,9 +34,10 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
         style={{
           background: 'var(--pixel-bg)',
           border: '2px solid var(--pixel-border)',
-          boxShadow: 'var(--pixel-shadow)',
-          padding: 16,
-          width: 300,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5), var(--pixel-shadow)',
+          padding: 20,
+          width: 360,
+          borderRadius: 4,
         }}
       >
         <div
@@ -47,18 +48,21 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
             marginBottom: 12,
           }}
         >
-          <span style={{ fontSize: '22px', color: 'var(--pixel-text)' }}>Keyboard Shortcuts</span>
+          <span style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)' }}>Keyboard Shortcuts</span>
           <button
             onClick={onClose}
             style={{
               background: 'none',
               border: 'none',
               color: 'var(--pixel-text-dim)',
-              fontSize: '22px',
+              fontSize: 'var(--text-xl)',
+              fontFamily: 'var(--system-font)',
               cursor: 'pointer',
+              padding: '4px 8px',
+              minHeight: 32,
             }}
           >
-            X
+            ×
           </button>
         </div>
         {shortcuts.map(({ key, desc }) => (
@@ -67,8 +71,9 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              padding: '4px 0',
-              fontSize: '18px',
+              padding: '8px 0',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--system-font)',
               color: 'var(--pixel-text)',
             }}
           >
@@ -76,9 +81,12 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
             <span
               style={{
                 color: 'var(--pixel-accent)',
+                fontFamily: 'var(--pixel-font)',
+                fontSize: 'var(--text-sm)',
                 border: '1px solid var(--pixel-border)',
-                padding: '0 6px',
-                minWidth: 24,
+                padding: '2px 10px',
+                borderRadius: 4,
+                minWidth: 28,
                 textAlign: 'center',
               }}
             >

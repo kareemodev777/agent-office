@@ -32,7 +32,7 @@ export function TopBar({
         gap: 12,
         background: 'var(--pixel-bg)',
         border: '2px solid var(--pixel-border)',
-        padding: '4px 10px',
+        padding: '6px 14px',
         boxShadow: 'var(--pixel-shadow)',
       }}
     >
@@ -46,7 +46,8 @@ export function TopBar({
         <span
           onClick={() => setShowCostBreakdown(!showCostBreakdown)}
           style={{
-            fontSize: '20px',
+            fontSize: 'var(--text-lg)',
+            fontFamily: 'var(--system-font)',
             color: '#c8a8e8',
             cursor: 'pointer',
             fontWeight: 'bold',
@@ -61,22 +62,24 @@ export function TopBar({
               position: 'absolute',
               top: '100%',
               left: 0,
-              marginTop: 6,
+              marginTop: 8,
               background: 'var(--pixel-bg)',
               border: '2px solid var(--pixel-border)',
-              boxShadow: 'var(--pixel-shadow)',
-              padding: '6px 10px',
-              minWidth: 180,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.4), var(--pixel-shadow)',
+              padding: '10px 14px',
+              minWidth: 220,
               zIndex: 200,
+              borderRadius: 4,
             }}
           >
             <div
               style={{
-                fontSize: '16px',
+                fontSize: 'var(--text-base)',
+                fontFamily: 'var(--pixel-font)',
                 color: 'var(--pixel-text-dim)',
-                marginBottom: 4,
+                marginBottom: 8,
                 borderBottom: '1px solid var(--pixel-border)',
-                paddingBottom: 4,
+                paddingBottom: 6,
               }}
             >
               Cost Breakdown
@@ -90,9 +93,10 @@ export function TopBar({
                     display: 'flex',
                     justifyContent: 'space-between',
                     gap: 12,
-                    fontSize: '16px',
+                    fontSize: 'var(--text-base)',
+                    fontFamily: 'var(--system-font)',
                     color: 'var(--pixel-text)',
-                    padding: '2px 0',
+                    padding: '4px 0',
                   }}
                 >
                   <span
@@ -100,7 +104,7 @@ export function TopBar({
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      maxWidth: 120,
+                      maxWidth: 140,
                     }}
                   >
                     {info.slug || info.label}
@@ -118,12 +122,13 @@ export function TopBar({
 
 function Stat({ value, label, color }: { value: number; label: string; color: string }) {
   return (
-    <span style={{ fontSize: '20px', color: 'var(--pixel-text-dim)' }}>
-      <span style={{ color, fontWeight: 'bold' }}>{value}</span> {label}
+    <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
+      <span style={{ color, fontWeight: 'bold', fontSize: 'var(--text-lg)' }}>{value}</span>{' '}
+      <span style={{ fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>{label}</span>
     </span>
   );
 }
 
 function Sep() {
-  return <span style={{ color: 'var(--pixel-border-light)', fontSize: '20px' }}>|</span>;
+  return <span style={{ color: 'var(--pixel-border-light)', fontSize: 'var(--text-base)' }}>|</span>;
 }

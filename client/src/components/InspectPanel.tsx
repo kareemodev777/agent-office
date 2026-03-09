@@ -227,11 +227,11 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
         top: 0,
         right: 0,
         bottom: 0,
-        width: 380,
+        width: 420,
         zIndex: 100,
         background: 'var(--pixel-bg)',
         borderLeft: '2px solid var(--pixel-border)',
-        boxShadow: '-4px 0 12px rgba(0,0,0,0.4)',
+        boxShadow: '-4px 0 16px rgba(0,0,0,0.5)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -240,26 +240,29 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
       {/* Header */}
       <div
         style={{
-          padding: '8px 12px',
+          padding: '12px 16px',
           borderBottom: '2px solid var(--pixel-border)',
           flexShrink: 0,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-            <span style={{ fontSize: '22px', color: 'var(--pixel-text)', fontWeight: 'bold' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+            <span style={{ fontSize: 'var(--text-xl)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text)', fontWeight: 'bold' }}>
               {displayLabel}
             </span>
             {displayRole && (
               <span
                 style={{
-                  fontSize: '14px',
+                  fontSize: 'var(--text-sm)',
+                  fontFamily: 'var(--pixel-font)',
                   color: roleColor,
+                  background: `${roleColor}18`,
                   border: `1px solid ${roleColor}`,
-                  padding: '1px 5px',
-                  borderRadius: 2,
+                  padding: '2px 8px',
+                  borderRadius: 10,
                   textTransform: 'uppercase',
                   flexShrink: 0,
+                  letterSpacing: '0.5px',
                 }}
               >
                 {displayRole}
@@ -274,10 +277,12 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
               border: 'none',
               color: 'var(--pixel-close-text)',
               cursor: 'pointer',
-              padding: '0 4px',
-              fontSize: '28px',
+              padding: '4px 8px',
+              fontSize: '22px',
+              fontFamily: 'var(--system-font)',
               lineHeight: 1,
               flexShrink: 0,
+              minHeight: 32,
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.color = 'var(--pixel-close-hover)';
@@ -286,21 +291,23 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
               (e.currentTarget as HTMLElement).style.color = 'var(--pixel-close-text)';
             }}
           >
-            x
+            ×
           </button>
         </div>
 
         {/* Metadata row */}
         {meta && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4, fontSize: '16px', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8, fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
             {meta.gitBranch && (
               <span title="Git branch">
-                <span style={{ color: '#a8d8a8' }}>branch:</span> {meta.gitBranch}
+                <span style={{ color: '#a8d8a8', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>branch</span>{' '}
+                {meta.gitBranch}
               </span>
             )}
             {meta.startedAt > 0 && (
               <span title="Running time">
-                <span style={{ color: '#e8c87e' }}>time:</span> {formatDuration(meta.startedAt)}
+                <span style={{ color: '#e8c87e', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>time</span>{' '}
+                {formatDuration(meta.startedAt)}
               </span>
             )}
           </div>
@@ -308,21 +315,24 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
 
         {/* Token stats row */}
         {meta && (meta.inputTokens > 0 || meta.outputTokens > 0) && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 2, fontSize: '16px', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 4, fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
             <span>
-              <span style={{ color: '#7ec8e3' }}>in:</span> {formatTokens(meta.inputTokens)}
+              <span style={{ color: '#7ec8e3', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>in</span>{' '}
+              {formatTokens(meta.inputTokens)}
             </span>
             <span>
-              <span style={{ color: '#a8d8a8' }}>out:</span> {formatTokens(meta.outputTokens)}
+              <span style={{ color: '#a8d8a8', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>out</span>{' '}
+              {formatTokens(meta.outputTokens)}
             </span>
             <span>
-              <span style={{ color: '#e8c87e' }}>cost:</span> {formatCost(meta.inputTokens, meta.outputTokens)}
+              <span style={{ color: '#e8c87e', fontFamily: 'var(--pixel-font)', fontSize: 'var(--text-sm)' }}>cost</span>{' '}
+              {formatCost(meta.inputTokens, meta.outputTokens)}
             </span>
           </div>
         )}
 
         {/* Action buttons */}
-        <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
           <button
             onClick={handleCopyTranscript}
             style={{
@@ -330,8 +340,10 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
               border: '1px solid var(--pixel-border)',
               color: 'var(--pixel-text-dim)',
               cursor: 'pointer',
-              padding: '2px 8px',
-              fontSize: '16px',
+              padding: '6px 14px',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--pixel-font)',
+              minHeight: 32,
             }}
           >
             Copy Transcript
@@ -346,15 +358,15 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
         style={{
           flex: 1,
           overflowY: 'auto',
-          padding: '6px 10px',
+          padding: '8px 14px',
         }}
       >
         {loading ? (
-          <div style={{ color: 'var(--pixel-text-dim)', fontSize: '20px', padding: 12 }}>
+          <div style={{ color: 'var(--pixel-text-dim)', fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', padding: 16 }}>
             Loading...
           </div>
         ) : lines.length === 0 ? (
-          <div style={{ color: 'var(--pixel-text-dim)', fontSize: '20px', padding: 12 }}>
+          <div style={{ color: 'var(--pixel-text-dim)', fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', padding: 16 }}>
             No activity data available.
           </div>
         ) : (
@@ -362,37 +374,41 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
             <div
               key={i}
               style={{
-                padding: '3px 0',
+                padding: '8px 0',
                 borderBottom: '1px solid var(--pixel-border)',
                 display: 'flex',
-                gap: 6,
+                gap: 8,
                 alignItems: 'flex-start',
               }}
             >
               <span
                 style={{
-                  fontSize: '12px',
+                  fontSize: 'var(--text-xs)',
+                  fontFamily: 'var(--pixel-font)',
                   fontWeight: 'bold',
                   color: typeColor(line.type),
                   flexShrink: 0,
-                  minWidth: 28,
+                  minWidth: 36,
                   textAlign: 'center',
-                  padding: '1px 3px',
+                  padding: '3px 6px',
+                  background: `${typeColor(line.type)}18`,
                   border: `1px solid ${typeColor(line.type)}`,
-                  borderRadius: 2,
+                  borderRadius: 10,
                   lineHeight: '14px',
+                  letterSpacing: '0.5px',
                 }}
               >
                 {typeLabel(line.type)}
               </span>
               <span
                 style={{
-                  fontSize: '15px',
+                  fontSize: 'var(--text-base)',
+                  fontFamily: 'var(--system-font)',
                   color: 'var(--pixel-text)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   wordBreak: 'break-word',
-                  lineHeight: '17px',
+                  lineHeight: '20px',
                 }}
               >
                 {line.summary}
@@ -407,15 +423,17 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
         <div
           style={{
             position: 'absolute',
-            bottom: 8,
-            right: 20,
+            bottom: 12,
+            right: 24,
             background: 'var(--pixel-bg)',
             border: '1px solid var(--pixel-border)',
-            padding: '2px 8px',
-            fontSize: '14px',
+            padding: '6px 14px',
+            fontSize: 'var(--text-sm)',
+            fontFamily: 'var(--pixel-font)',
             color: 'var(--pixel-text-dim)',
             cursor: 'pointer',
             zIndex: 101,
+            boxShadow: 'var(--pixel-shadow)',
           }}
           onClick={() => {
             setAutoScroll(true);

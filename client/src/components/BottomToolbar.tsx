@@ -24,22 +24,24 @@ const panelStyle: React.CSSProperties = {
   zIndex: 'var(--pixel-controls-z)',
   display: 'flex',
   alignItems: 'center',
-  gap: 4,
+  gap: 6,
   background: 'var(--pixel-bg)',
   border: '2px solid var(--pixel-border)',
   borderRadius: 0,
-  padding: '4px 6px',
+  padding: '6px 8px',
   boxShadow: 'var(--pixel-shadow)',
 };
 
 const btnBase: React.CSSProperties = {
-  padding: '5px 10px',
-  fontSize: '24px',
+  padding: '8px 16px',
+  fontSize: 'var(--text-base)',
+  fontFamily: 'var(--pixel-font)',
   color: 'var(--pixel-text)',
   background: 'var(--pixel-btn-bg)',
   border: '2px solid transparent',
   borderRadius: 0,
   cursor: 'pointer',
+  minHeight: 36,
 };
 
 const btnActive: React.CSSProperties = {
@@ -138,8 +140,9 @@ export function BottomToolbar({
                   display: 'block',
                   width: '100%',
                   textAlign: 'left',
-                  padding: '6px 10px',
-                  fontSize: '22px',
+                  padding: '8px 14px',
+                  fontSize: 'var(--text-base)',
+                  fontFamily: 'var(--pixel-font)',
                   color: 'var(--pixel-text)',
                   background: hoveredFolder === i ? 'var(--pixel-btn-hover-bg)' : 'transparent',
                   border: 'none',
@@ -244,13 +247,13 @@ export function BottomToolbar({
           onMouseLeave={() => setHovered(null)}
           style={{
             ...btnBase,
-            fontSize: '20px',
-            padding: '5px 8px',
+            fontSize: 'var(--text-base)',
+            padding: '8px 14px',
             background: hovered === 'shortcuts' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
           }}
           title="Keyboard shortcuts (?)"
         >
-          ? Keys
+          Keys
         </button>
       )}
     </div>

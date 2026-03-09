@@ -7,6 +7,19 @@
 }
 
 :root {
+  /* Font stacks */
+  --pixel-font: 'FS Pixel Sans', monospace;
+  --system-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* Size scale */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+
   --pixel-bg: #1e1e2e;
   --pixel-border: #4a4a6a;
   --pixel-border-light: #6a6a8a;

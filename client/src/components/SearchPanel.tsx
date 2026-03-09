@@ -113,7 +113,7 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
           flexShrink: 0,
         }}
       >
-        <span style={{ fontSize: '18px', color: 'var(--pixel-text-dim)' }}>Search:</span>
+        <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text-dim)' }}>Search:</span>
         <input
           ref={inputRef}
           type="text"
@@ -126,10 +126,11 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
             background: 'var(--pixel-btn-bg)',
             border: '1px solid var(--pixel-border)',
             color: 'var(--pixel-text)',
-            padding: '4px 8px',
-            fontSize: '16px',
+            padding: '8px 12px',
+            fontSize: 'var(--text-base)',
+            fontFamily: 'var(--system-font)',
             outline: 'none',
-            fontFamily: 'inherit',
+            minHeight: 36,
           }}
         />
         <button
@@ -138,25 +139,27 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
             background: 'none',
             border: 'none',
             color: 'var(--pixel-text-dim)',
-            fontSize: '20px',
+            fontSize: 'var(--text-xl)',
+            fontFamily: 'var(--system-font)',
             cursor: 'pointer',
-            padding: '0 4px',
+            padding: '4px 8px',
+            minHeight: 32,
           }}
         >
-          X
+          ×
         </button>
       </div>
 
       {/* Results */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
         {searching && (
-          <div style={{ padding: 12, fontSize: '16px', color: 'var(--pixel-text-dim)', textAlign: 'center' }}>
+          <div style={{ padding: 12, fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', textAlign: 'center' }}>
             Searching...
           </div>
         )}
 
         {!searching && query.trim().length >= 2 && results.length === 0 && (
-          <div style={{ padding: 12, fontSize: '16px', color: 'var(--pixel-text-dim)', textAlign: 'center' }}>
+          <div style={{ padding: 12, fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', textAlign: 'center' }}>
             No results found
           </div>
         )}
@@ -167,8 +170,9 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
             <div key={agentId}>
               <div
                 style={{
-                  padding: '4px 12px',
-                  fontSize: '14px',
+                  padding: '6px 14px',
+                  fontSize: 'var(--text-base)',
+                  fontFamily: 'var(--pixel-font)',
                   color: 'var(--pixel-accent)',
                   fontWeight: 'bold',
                   background: 'var(--pixel-btn-bg)',
@@ -184,13 +188,15 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
                     display: 'block',
                     width: '100%',
                     textAlign: 'left',
-                    padding: '4px 12px 4px 24px',
+                    padding: '8px 14px 8px 28px',
                     background: 'transparent',
                     border: 'none',
                     borderBottom: '1px solid var(--pixel-border)',
                     cursor: 'pointer',
-                    fontSize: '14px',
+                    fontSize: 'var(--text-base)',
+                    fontFamily: 'var(--system-font)',
                     color: 'var(--pixel-text)',
+                    minHeight: 36,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -205,7 +211,7 @@ export function SearchPanel({ onClose, onInspect }: SearchPanelProps) {
         })}
 
         {truncated && (
-          <div style={{ padding: 8, textAlign: 'center', fontSize: '14px', color: 'var(--pixel-text-dim)' }}>
+          <div style={{ padding: 10, textAlign: 'center', fontSize: 'var(--text-sm)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
             Results truncated to 50 — refine your search
           </div>
         )}

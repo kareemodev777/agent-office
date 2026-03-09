@@ -92,30 +92,33 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
         style={{
           background: 'var(--pixel-bg)',
           border: '2px solid var(--pixel-border)',
-          boxShadow: 'var(--pixel-shadow)',
-          padding: 16,
-          width: 440,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5), var(--pixel-shadow)',
+          padding: 20,
+          width: 480,
+          borderRadius: 4,
         }}
       >
-        <div style={{ fontSize: '22px', color: 'var(--pixel-text)', marginBottom: 12 }}>
+        <div style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)', marginBottom: 16 }}>
           Spawn Agent
         </div>
         <div style={{ marginBottom: 8 }}>
           <label
             style={{
-              fontSize: '16px',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--system-font)',
               color: 'var(--pixel-text-dim)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: 4,
+              marginBottom: 6,
             }}
           >
             Working Directory
             <button
               onClick={() => setShowBrowser(!showBrowser)}
               style={{
-                fontSize: '14px',
+                fontSize: 'var(--text-sm)',
+                fontFamily: 'var(--pixel-font)',
                 color: 'var(--pixel-accent)',
                 background: 'none',
                 border: 'none',
@@ -142,12 +145,14 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
             placeholder="/path/to/project"
             style={{
               width: '100%',
-              padding: '4px 8px',
-              fontSize: '18px',
+              padding: '8px 12px',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--system-font)',
               background: 'var(--pixel-btn-bg)',
               color: 'var(--pixel-text)',
               border: '1px solid var(--pixel-border)',
               boxSizing: 'border-box',
+              minHeight: 36,
             }}
           />
         </div>
@@ -173,8 +178,9 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
                   display: 'block',
                   width: '100%',
                   textAlign: 'left',
-                  padding: '4px 8px',
-                  fontSize: '16px',
+                  padding: '8px 12px',
+                  fontSize: 'var(--text-base)',
+                  fontFamily: 'var(--system-font)',
                   color: cwd === p.path ? 'var(--pixel-agent-text)' : 'var(--pixel-text)',
                   background:
                     cwd === p.path
@@ -195,7 +201,7 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
         {/* Recent projects */}
         {!showBrowser && recentProjects.length > 0 && (
           <div style={{ marginBottom: 8 }}>
-            <span style={{ fontSize: '14px', color: 'var(--pixel-text-dim)' }}>Recent: </span>
+            <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text-dim)' }}>Recent: </span>
             {recentProjects.map((rp) => {
               const name = rp.split('/').pop() || rp;
               return (
@@ -203,7 +209,8 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
                   key={rp}
                   onClick={() => setCwd(rp)}
                   style={{
-                    fontSize: '14px',
+                    fontSize: 'var(--text-sm)',
+                    fontFamily: 'var(--system-font)',
                     color: 'var(--pixel-accent)',
                     background: 'none',
                     border: 'none',
@@ -222,10 +229,11 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
         <div style={{ marginBottom: 12 }}>
           <label
             style={{
-              fontSize: '16px',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--system-font)',
               color: 'var(--pixel-text-dim)',
               display: 'block',
-              marginBottom: 4,
+              marginBottom: 6,
             }}
           >
             Prompt
@@ -237,8 +245,9 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
             rows={3}
             style={{
               width: '100%',
-              padding: '4px 8px',
-              fontSize: '18px',
+              padding: '8px 12px',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--system-font)',
               background: 'var(--pixel-btn-bg)',
               color: 'var(--pixel-text)',
               border: '1px solid var(--pixel-border)',
@@ -252,7 +261,7 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
               }
             }}
           />
-          <span style={{ fontSize: '12px', color: 'var(--pixel-text-dim)' }}>
+          <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>
             Press Enter to submit, Shift+Enter for newline
           </span>
         </div>
@@ -260,8 +269,10 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
           <button
             onClick={onClose}
             style={{
-              padding: '4px 12px',
-              fontSize: '20px',
+              padding: '8px 16px',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--pixel-font)',
+              minHeight: 36,
               background: 'var(--pixel-btn-bg)',
               color: 'var(--pixel-text)',
               border: '1px solid var(--pixel-border)',
@@ -273,8 +284,10 @@ export function SpawnDialog({ onSpawn, onClose }: SpawnDialogProps) {
           <button
             onClick={handleSubmit}
             style={{
-              padding: '4px 12px',
-              fontSize: '20px',
+              padding: '8px 16px',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--pixel-font)',
+              minHeight: 36,
               background: 'var(--pixel-agent-bg)',
               color: 'var(--pixel-agent-text)',
               border: '1px solid var(--pixel-agent-border)',

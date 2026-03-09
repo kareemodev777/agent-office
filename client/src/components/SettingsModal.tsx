@@ -46,14 +46,16 @@ const menuItemBase: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   width: '100%',
-  padding: '6px 10px',
-  fontSize: '24px',
+  padding: '10px 14px',
+  fontSize: 'var(--text-base)',
+  fontFamily: 'var(--system-font)',
   color: 'var(--pixel-text)',
   background: 'transparent',
   border: 'none',
   borderRadius: 0,
   cursor: 'pointer',
   textAlign: 'left',
+  minHeight: 36,
 };
 
 const SOUND_LABELS: Record<SoundType, string> = {
@@ -132,21 +134,22 @@ export function SettingsModal({
   const Checkbox = ({ checked }: { checked: boolean }) => (
     <span
       style={{
-        width: 14,
-        height: 14,
+        width: 18,
+        height: 18,
         border: '2px solid var(--pixel-border-light)',
-        borderRadius: 0,
+        borderRadius: 2,
         background: checked ? 'var(--pixel-accent)' : 'transparent',
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '12px',
+        fontSize: 'var(--text-xs)',
+        fontFamily: 'var(--system-font)',
         lineHeight: 1,
         color: '#fff',
       }}
     >
-      {checked ? 'X' : ''}
+      {checked ? '✓' : ''}
     </span>
   );
 
@@ -173,10 +176,10 @@ export function SettingsModal({
           zIndex: 50,
           background: 'var(--pixel-bg)',
           border: '2px solid var(--pixel-border)',
-          borderRadius: 0,
-          padding: '4px',
-          boxShadow: 'var(--pixel-shadow)',
-          minWidth: 280,
+          borderRadius: 4,
+          padding: '8px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5), var(--pixel-shadow)',
+          minWidth: 340,
           maxHeight: '80vh',
           overflowY: 'auto',
         }}
@@ -187,12 +190,12 @@ export function SettingsModal({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '4px 10px',
+            padding: '8px 14px',
             borderBottom: '1px solid var(--pixel-border)',
-            marginBottom: '4px',
+            marginBottom: '8px',
           }}
         >
-          <span style={{ fontSize: '24px', color: 'var(--pixel-text)' }}>Settings</span>
+          <span style={{ fontSize: 'var(--text-2xl)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)' }}>Settings</span>
           <button
             onClick={onClose}
             onMouseEnter={() => setHovered('close')}
@@ -202,13 +205,15 @@ export function SettingsModal({
               border: 'none',
               borderRadius: 0,
               color: 'var(--pixel-text-dim)',
-              fontSize: '24px',
+              fontSize: 'var(--text-xl)',
+              fontFamily: 'var(--system-font)',
               cursor: 'pointer',
-              padding: '0 4px',
+              padding: '4px 8px',
               lineHeight: 1,
+              minHeight: 32,
             }}
           >
-            X
+            ×
           </button>
         </div>
 
@@ -220,7 +225,7 @@ export function SettingsModal({
           style={{ ...menuItemBase, background: hovered === 'theme' ? 'var(--pixel-btn-hover-bg)' : 'transparent' }}
         >
           <span>Theme</span>
-          <span style={{ fontSize: '18px', color: 'var(--pixel-accent)', border: '1px solid var(--pixel-accent)', padding: '0 6px' }}>
+          <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-accent)', border: '1px solid var(--pixel-accent)', padding: '2px 10px', borderRadius: 8 }}>
             {theme === 'dark' ? 'Dark' : 'Light'}
           </span>
         </button>
@@ -253,7 +258,7 @@ export function SettingsModal({
         </button>
 
         {/* Per-sound toggles */}
-        <div style={{ padding: '0 10px 4px 20px' }}>
+        <div style={{ padding: '0 14px 8px 28px' }}>
           {(Object.keys(SOUND_LABELS) as SoundType[]).map((type) => (
             <div
               key={type}
@@ -261,13 +266,14 @@ export function SettingsModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '3px 0',
-                fontSize: '18px',
+                padding: '6px 0',
+                fontSize: 'var(--text-base)',
+                fontFamily: 'var(--system-font)',
                 color: 'var(--pixel-text-dim)',
               }}
             >
               <span>{SOUND_LABELS[type]}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <button
                   onClick={() => playSoundByType(type)}
                   style={{
@@ -275,8 +281,10 @@ export function SettingsModal({
                     border: '1px solid var(--pixel-border)',
                     color: 'var(--pixel-text-dim)',
                     cursor: 'pointer',
-                    padding: '1px 6px',
-                    fontSize: '14px',
+                    padding: '4px 10px',
+                    fontSize: 'var(--text-sm)',
+                    fontFamily: 'var(--pixel-font)',
+                    minHeight: 28,
                   }}
                 >
                   Test
@@ -292,8 +300,8 @@ export function SettingsModal({
           ))}
 
           {/* Volume slider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-            <span style={{ fontSize: '16px', color: 'var(--pixel-text-dim)' }}>Volume</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+            <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>Volume</span>
             <input
               type="range"
               min="0"
@@ -302,16 +310,16 @@ export function SettingsModal({
               onChange={handleVolumeChange}
               style={{ flex: 1 }}
             />
-            <span style={{ fontSize: '14px', color: 'var(--pixel-text-dim)', minWidth: 30, textAlign: 'right' }}>
+            <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)', minWidth: 36, textAlign: 'right' }}>
               {Math.round(volume * 100)}%
             </span>
           </div>
         </div>
 
         {/* Webhook URL */}
-        <div style={{ padding: '6px 10px', borderTop: '1px solid var(--pixel-border)' }}>
-          <div style={{ fontSize: '18px', color: 'var(--pixel-text)', marginBottom: 4 }}>Webhook URL</div>
-          <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ padding: '10px 14px', borderTop: '1px solid var(--pixel-border)' }}>
+          <div style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--pixel-font)', color: 'var(--pixel-text)', marginBottom: 6 }}>Webhook URL</div>
+          <div style={{ display: 'flex', gap: 6 }}>
             <input
               type="text"
               value={webhookUrl}
@@ -322,10 +330,11 @@ export function SettingsModal({
                 background: 'var(--pixel-btn-bg)',
                 border: '1px solid var(--pixel-border)',
                 color: 'var(--pixel-text)',
-                padding: '3px 6px',
-                fontSize: '14px',
+                padding: '6px 10px',
+                fontSize: 'var(--text-base)',
+                fontFamily: 'var(--system-font)',
                 outline: 'none',
-                fontFamily: 'inherit',
+                minHeight: 36,
               }}
             />
             <button
@@ -335,8 +344,10 @@ export function SettingsModal({
                 border: '1px solid var(--pixel-border)',
                 color: 'var(--pixel-accent)',
                 cursor: 'pointer',
-                padding: '3px 8px',
-                fontSize: '14px',
+                padding: '6px 14px',
+                fontSize: 'var(--text-base)',
+                fontFamily: 'var(--pixel-font)',
+                minHeight: 36,
               }}
             >
               Save
@@ -353,12 +364,12 @@ export function SettingsModal({
         >
           <span>Debug View</span>
           {isDebugMode && (
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--pixel-accent)', flexShrink: 0 }} />
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--pixel-accent)', flexShrink: 0 }} />
           )}
         </button>
 
         {/* Clear History */}
-        <div style={{ padding: '6px 10px', borderTop: '1px solid var(--pixel-border)' }}>
+        <div style={{ padding: '10px 14px', borderTop: '1px solid var(--pixel-border)' }}>
           {!clearConfirm ? (
             <button
               onClick={() => setClearConfirm(true)}
@@ -375,7 +386,7 @@ export function SettingsModal({
             </button>
           ) : (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span style={{ fontSize: '18px', color: 'var(--pixel-text-dim)' }}>Clear all history?</span>
+              <span style={{ fontSize: 'var(--text-base)', fontFamily: 'var(--system-font)', color: 'var(--pixel-text-dim)' }}>Clear all history?</span>
               <button
                 onClick={handleClearHistory}
                 style={{
@@ -383,8 +394,10 @@ export function SettingsModal({
                   border: 'none',
                   color: '#fff',
                   cursor: 'pointer',
-                  padding: '2px 10px',
-                  fontSize: '18px',
+                  padding: '6px 14px',
+                  fontSize: 'var(--text-base)',
+                  fontFamily: 'var(--pixel-font)',
+                  minHeight: 36,
                 }}
               >
                 Yes
@@ -396,8 +409,10 @@ export function SettingsModal({
                   border: '1px solid var(--pixel-border)',
                   color: 'var(--pixel-text)',
                   cursor: 'pointer',
-                  padding: '2px 10px',
-                  fontSize: '18px',
+                  padding: '6px 14px',
+                  fontSize: 'var(--text-base)',
+                  fontFamily: 'var(--pixel-font)',
+                  minHeight: 36,
                 }}
               >
                 No

@@ -157,24 +157,24 @@ export function ToolOverlay({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 5,
+                gap: 6,
                 background: 'var(--pixel-bg)',
                 border: isSelected
                   ? '2px solid var(--pixel-border-light)'
                   : '2px solid var(--pixel-border)',
-                borderRadius: 0,
-                padding: isSelected ? '3px 6px 3px 8px' : '3px 8px',
-                boxShadow: 'var(--pixel-shadow)',
+                borderRadius: 4,
+                padding: isSelected ? '6px 8px 6px 10px' : '6px 10px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.4), var(--pixel-shadow)',
                 whiteSpace: 'nowrap',
-                maxWidth: 240,
+                maxWidth: 280,
               }}
             >
               {dotColor && (
                 <span
                   className={isActive && !hasPermission ? 'pixel-agents-pulse' : undefined}
                   style={{
-                    width: 6,
-                    height: 6,
+                    width: 8,
+                    height: 8,
                     borderRadius: '50%',
                     background: dotColor,
                     flexShrink: 0,
@@ -182,14 +182,15 @@ export function ToolOverlay({
                 />
               )}
               {isStuck && (
-                <span style={{ fontSize: '14px', flexShrink: 0 }} title="Agent may be stuck">
+                <span style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--pixel-font)', color: '#e8c87e', flexShrink: 0 }} title="Agent may be stuck">
                   Stuck?
                 </span>
               )}
               <div style={{ overflow: 'hidden' }}>
                 <span
                   style={{
-                    fontSize: isSub ? '20px' : '22px',
+                    fontSize: isSub ? '14px' : '16px',
+                    fontFamily: 'var(--system-font)',
                     fontStyle: isSub ? 'italic' : undefined,
                     color: 'var(--pixel-text)',
                     overflow: 'hidden',
@@ -203,7 +204,8 @@ export function ToolOverlay({
                 {!isSub && textPreviews?.[id] && (Date.now() - textPreviews[id].timestamp < 5000) && (
                   <span
                     style={{
-                      fontSize: '16px',
+                      fontSize: '13px',
+                      fontFamily: 'var(--system-font)',
                       color: 'var(--pixel-text-dim)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -216,10 +218,11 @@ export function ToolOverlay({
                   </span>
                 )}
                 {!isSub && displayLabel && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <span
                       style={{
-                        fontSize: '16px',
+                        fontSize: '14px',
+                        fontFamily: 'var(--system-font)',
                         color: 'var(--pixel-text-dim)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -230,14 +233,17 @@ export function ToolOverlay({
                     {role && roleColor && (
                       <span
                         style={{
-                          fontSize: '11px',
+                          fontSize: 'var(--text-xs)',
+                          fontFamily: 'var(--pixel-font)',
                           color: roleColor,
+                          background: `${roleColor}18`,
                           border: `1px solid ${roleColor}`,
-                          padding: '0 3px',
-                          borderRadius: 2,
+                          padding: '1px 6px',
+                          borderRadius: 8,
                           textTransform: 'uppercase',
-                          lineHeight: '14px',
+                          lineHeight: '16px',
                           flexShrink: 0,
+                          letterSpacing: '0.5px',
                         }}
                       >
                         {role}
@@ -248,7 +254,8 @@ export function ToolOverlay({
                 {isSub && ch.folderName && (
                   <span
                     style={{
-                      fontSize: '16px',
+                      fontSize: '13px',
+                      fontFamily: 'var(--system-font)',
                       color: 'var(--pixel-text-dim)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -271,11 +278,13 @@ export function ToolOverlay({
                     border: 'none',
                     color: 'var(--pixel-close-text)',
                     cursor: 'pointer',
-                    padding: '0 2px',
-                    fontSize: '26px',
+                    padding: '4px 6px',
+                    fontSize: '18px',
+                    fontFamily: 'var(--system-font)',
                     lineHeight: 1,
                     marginLeft: 2,
                     flexShrink: 0,
+                    minHeight: 32,
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.color = 'var(--pixel-close-hover)';
