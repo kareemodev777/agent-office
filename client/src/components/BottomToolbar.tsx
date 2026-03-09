@@ -98,6 +98,7 @@ export function BottomToolbar({
   };
 
   return (
+    <>
     <div style={panelStyle}>
       <div ref={folderPickerRef} style={{ position: 'relative' }}>
         <button
@@ -233,12 +234,6 @@ export function BottomToolbar({
         >
           Settings
         </button>
-        <SettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          isDebugMode={isDebugMode}
-          onToggleDebugMode={onToggleDebugMode}
-        />
       </div>
       {onShowShortcuts && (
         <button
@@ -255,5 +250,14 @@ export function BottomToolbar({
         </button>
       )}
     </div>
+    {isSettingsOpen && (
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        isDebugMode={isDebugMode}
+        onToggleDebugMode={onToggleDebugMode}
+      />
+    )}
+    </>
   );
 }
