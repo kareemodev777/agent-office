@@ -1,5 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { WebSocketServer, WebSocket } from 'ws';
@@ -10,6 +12,7 @@ import {
   getRecentLines,
   getFullTranscript,
   getAgentById,
+  getAgents,
   getStats,
   checkStuckAgents,
   subscribeInspect,
@@ -115,6 +118,18 @@ wss.on('connection', (ws) => {
             console.log(`[Agent Office] Could not find process for agent ${agentId}`);
           }
         }
+      } else if (msg.type === 'getProjects') {
+        try {
+          const projectsDir = path.join(os.homedir(), 'Projects');
+          const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
+          const folders = entries
+            .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
+            .map((e) => ({ name: e.name, path: path.join(projectsDir, e.name) }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+          ws.send(JSON.stringify({ type: 'projects', folders }));
+        } catch {
+          ws.send(JSON.stringify({ type: 'projects', folders: [] }));
+        }
       } else if (msg.type === 'spawnAgent') {
         const cwd = msg.cwd as string;
         const prompt = msg.prompt as string;
@@ -137,10 +152,21 @@ wss.on('connection', (ws) => {
 // Start watching JSONL files
 startWatching(broadcast);
 
-// Periodic stats broadcast
+// Periodic stats + token updates broadcast
 setInterval(() => {
   const stats = getStats();
   broadcast({ type: 'stats', ...stats });
+  // Broadcast token updates for all active agents
+  for (const agent of getAgents().values()) {
+    broadcast({
+      type: 'agentTokenUpdate',
+      id: agent.id,
+      inputTokens: agent.inputTokens,
+      outputTokens: agent.outputTokens,
+      cacheCreationTokens: agent.cacheCreationTokens,
+      cacheReadTokens: agent.cacheReadTokens,
+    });
+  }
 }, STATS_BROADCAST_INTERVAL_MS);
 
 // Periodic stuck detection

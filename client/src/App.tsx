@@ -3,7 +3,9 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 import { BottomToolbar } from './components/BottomToolbar.js';
 import { ContextMenu } from './components/ContextMenu.js';
 import { DebugView } from './components/DebugView.js';
+import { HistoryPanel } from './components/HistoryPanel.js';
 import { InspectPanel } from './components/InspectPanel.js';
+import { ShortcutsHelp } from './components/ShortcutsHelp.js';
 import { SpawnDialog } from './components/SpawnDialog.js';
 import { TopBar } from './components/TopBar.js';
 import { ZoomControls } from './components/ZoomControls.js';
@@ -11,6 +13,8 @@ import { PULSE_ANIMATION_DURATION_SEC } from './constants.js';
 import { useEditorActions } from './hooks/useEditorActions.js';
 import { useEditorKeyboard } from './hooks/useEditorKeyboard.js';
 import { useExtensionMessages } from './hooks/useExtensionMessages.js';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts.js';
+import { ConnectionLines } from './office/components/ConnectionLines.js';
 import { OfficeCanvas } from './office/components/OfficeCanvas.js';
 import { ToolOverlay } from './office/components/ToolOverlay.js';
 import { EditorState } from './office/editor/editorState.js';
@@ -148,6 +152,8 @@ function App() {
     workspaceFolders,
     stats,
     stuckAgents,
+    totalCost,
+    closedSessions,
   } = useExtensionMessages(getOfficeState, editor.setLastSavedLayout, isEditDirty);
 
   const [isDebugMode, setIsDebugMode] = useState(false);
@@ -155,10 +161,48 @@ function App() {
   const [inspectAgentId, setInspectAgentId] = useState<number | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; agentId: number } | null>(null);
   const [showSpawnDialog, setShowSpawnDialog] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleSelectAgent = useCallback((_id: number) => {
     // No-op in standalone (no terminal to focus)
   }, []);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    isEditMode: editor.isEditMode,
+    onKillSelected: useCallback(() => {
+      const os = getOfficeState();
+      const id = os.selectedAgentId;
+      if (id !== null && id >= 0 && confirm('Kill this agent?')) {
+        transport.postMessage({ type: 'killAgent', id });
+      }
+    }, []),
+    onToggleInspect: useCallback(() => {
+      const os = getOfficeState();
+      const id = os.selectedAgentId;
+      if (id !== null) {
+        setInspectAgentId((prev) => (prev === id ? null : id));
+      }
+    }, []),
+    onOpenSpawn: useCallback(() => setShowSpawnDialog(true), []),
+    onClosePanel: useCallback(() => {
+      if (showShortcuts) { setShowShortcuts(false); return; }
+      if (showSpawnDialog) { setShowSpawnDialog(false); return; }
+      if (inspectAgentId !== null) { setInspectAgentId(null); return; }
+      if (contextMenu) { setContextMenu(null); return; }
+      const os = getOfficeState();
+      os.selectedAgentId = null;
+    }, [showShortcuts, showSpawnDialog, inspectAgentId, contextMenu]),
+    onSelectByIndex: useCallback((index: number) => {
+      if (index < agents.length) {
+        const id = agents[index];
+        const os = getOfficeState();
+        os.selectedAgentId = id;
+      }
+    }, [agents]),
+    onShowHelp: useCallback(() => setShowShortcuts((v) => !v), []),
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -264,6 +308,11 @@ function App() {
           50% { opacity: 0.3; }
         }
         .pixel-agents-pulse { animation: pixel-agents-pulse ${PULSE_ANIMATION_DURATION_SEC}s ease-in-out infinite; }
+        @keyframes empty-state-bob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        .empty-state-pulse { animation: empty-state-bob 3s ease-in-out infinite; }
       `}</style>
 
       <OfficeCanvas
@@ -302,6 +351,8 @@ function App() {
           activeAgents={stats.activeAgents}
           toolsRunning={stats.toolsRunning}
           sessionsToday={stats.sessionsToday}
+          totalCost={totalCost}
+          agentInfos={agentInfos}
         />
       )}
 
@@ -343,9 +394,11 @@ function App() {
         onToggleDebugMode={handleToggleDebugMode}
         workspaceFolders={workspaceFolders}
         onSpawnAgent={() => setShowSpawnDialog(true)}
+        onShowHistory={() => setShowHistory(true)}
+        onShowShortcuts={() => setShowShortcuts(true)}
       />
 
-      {/* Status bar */}
+      {/* Aggregate cost bar */}
       <div
         style={{
           position: 'absolute',
@@ -363,9 +416,7 @@ function App() {
           color: 'var(--pixel-text-dim)',
         }}
       >
-        <span>{agents.length} active</span>
-        <span style={{ color: 'var(--pixel-border-light)' }}>|</span>
-        <span>{stats.sessionsToday} today</span>
+        <span style={{ color: '#c8a8e8' }}>Total: ~${totalCost.toFixed(2)} today</span>
       </div>
 
       {editor.isEditMode && editor.isDirty && (
@@ -420,6 +471,14 @@ function App() {
             />
           );
         })()}
+
+      <ConnectionLines
+        officeState={officeState}
+        containerRef={containerRef}
+        zoom={editor.zoom}
+        panRef={editor.panRef}
+        agentInfos={agentInfos}
+      />
 
       <ToolOverlay
         officeState={officeState}
@@ -481,6 +540,40 @@ function App() {
         />
       )}
 
+      {/* Empty state message */}
+      {agents.length === 0 && !editor.isEditMode && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            zIndex: 45,
+          }}
+        >
+          <div
+            className="empty-state-pulse"
+            style={{
+              background: 'rgba(30, 30, 46, 0.85)',
+              border: '2px solid var(--pixel-border)',
+              boxShadow: 'var(--pixel-shadow)',
+              padding: '16px 24px',
+              textAlign: 'center',
+              maxWidth: 380,
+            }}
+          >
+            <div style={{ fontSize: '28px', color: 'var(--pixel-text)', marginBottom: 8 }}>
+              No agents running
+            </div>
+            <div style={{ fontSize: '18px', color: 'var(--pixel-text-dim)' }}>
+              Click <b>Spawn</b> or start Claude Code in a project
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Spawn dialog */}
       {showSpawnDialog && (
         <SpawnDialog
@@ -488,6 +581,23 @@ function App() {
           onClose={() => setShowSpawnDialog(false)}
         />
       )}
+      {/* History panel */}
+      {showHistory && (
+        <HistoryPanel
+          agents={agents}
+          agentInfos={agentInfos}
+          closedSessions={closedSessions}
+          onClose={() => setShowHistory(false)}
+          onInspect={(id) => {
+            setInspectAgentId(id);
+            const os = getOfficeState();
+            os.selectedAgentId = id;
+          }}
+        />
+      )}
+
+      {/* Shortcuts help */}
+      {showShortcuts && <ShortcutsHelp onClose={() => setShowShortcuts(false)} />}
     </div>
   );
 }

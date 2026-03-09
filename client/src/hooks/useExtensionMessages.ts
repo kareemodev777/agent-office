@@ -43,7 +43,38 @@ export interface AgentInfo {
   gitBranch: string | null;
   inputTokens: number;
   outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
   startedAt: number;
+}
+
+/** Calculate cost using Opus pricing */
+export function calculateCost(info: {
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens?: number;
+  cacheReadTokens?: number;
+}): number {
+  return (
+    (info.inputTokens * 3 +
+      info.outputTokens * 15 +
+      (info.cacheCreationTokens ?? 0) * 3.75 +
+      (info.cacheReadTokens ?? 0) * 0.3) /
+    1_000_000
+  );
+}
+
+export interface ClosedSession {
+  id: number;
+  label: string;
+  slug: string | null;
+  role: string | null;
+  duration: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationTokens: number;
+  cacheReadTokens: number;
+  closedAt: number;
 }
 
 export interface ExtensionMessageState {
@@ -59,6 +90,8 @@ export interface ExtensionMessageState {
   workspaceFolders: WorkspaceFolder[];
   stats: { activeAgents: number; toolsRunning: number; sessionsToday: number };
   stuckAgents: Set<number>;
+  totalCost: number;
+  closedSessions: ClosedSession[];
 }
 
 function saveAgentSeats(os: OfficeState): void {
@@ -110,6 +143,9 @@ export function useExtensionMessages(
   const [layoutReady, setLayoutReady] = useState(false);
   const [stats, setStats] = useState({ activeAgents: 0, toolsRunning: 0, sessionsToday: 0 });
   const [stuckAgents, setStuckAgents] = useState<Set<number>>(new Set());
+  const [totalCost, setTotalCost] = useState(0);
+  const [closedSessions, setClosedSessions] = useState<ClosedSession[]>([]);
+  const closedCostRef = useRef(0);
 
   const layoutReadyRef = useRef(false);
 
@@ -146,6 +182,8 @@ export function useExtensionMessages(
           isWaiting: boolean;
           inputTokens: number;
           outputTokens: number;
+          cacheCreationTokens: number;
+          cacheReadTokens: number;
           startedAt: number;
           tools: Array<{ toolId: string; status: string }>;
         }>;
@@ -161,6 +199,8 @@ export function useExtensionMessages(
             gitBranch: a.gitBranch,
             inputTokens: a.inputTokens,
             outputTokens: a.outputTokens,
+            cacheCreationTokens: a.cacheCreationTokens ?? 0,
+            cacheReadTokens: a.cacheReadTokens ?? 0,
             startedAt: a.startedAt,
           };
           const m = meta[a.id];
@@ -193,6 +233,8 @@ export function useExtensionMessages(
             gitBranch: null,
             inputTokens: 0,
             outputTokens: 0,
+            cacheCreationTokens: 0,
+            cacheReadTokens: 0,
             startedAt: Date.now(),
           },
         }));
@@ -201,6 +243,31 @@ export function useExtensionMessages(
         saveAgentSeats(os);
       } else if (msg.type === 'agentClosed') {
         const id = msg.id as number;
+        // Accumulate cost and save to closed sessions before removing info
+        setAgentInfos((prev) => {
+          const info = prev[id];
+          if (info) {
+            closedCostRef.current += calculateCost(info);
+            setClosedSessions((cs) => [
+              ...cs,
+              {
+                id,
+                label: info.label,
+                slug: info.slug,
+                role: info.role,
+                duration: Date.now() - info.startedAt,
+                inputTokens: info.inputTokens,
+                outputTokens: info.outputTokens,
+                cacheCreationTokens: info.cacheCreationTokens,
+                cacheReadTokens: info.cacheReadTokens,
+                closedAt: Date.now(),
+              },
+            ]);
+          }
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
         setAgents((prev) => prev.filter((a) => a !== id));
         setSelectedAgent((prev) => (prev === id ? null : prev));
         setAgentTools((prev) => {
@@ -217,11 +284,6 @@ export function useExtensionMessages(
         });
         setSubagentTools((prev) => {
           if (!(id in prev)) return prev;
-          const next = { ...prev };
-          delete next[id];
-          return next;
-        });
-        setAgentInfos((prev) => {
           const next = { ...prev };
           delete next[id];
           return next;
@@ -426,11 +488,35 @@ export function useExtensionMessages(
         setSubagentCharacters((prev) =>
           prev.filter((s) => !(s.parentAgentId === id && s.parentToolId === parentToolId)),
         );
+      } else if (msg.type === 'agentTokenUpdate') {
+        const id = msg.id as number;
+        setAgentInfos((prev) => {
+          if (!prev[id]) return prev;
+          return {
+            ...prev,
+            [id]: {
+              ...prev[id],
+              inputTokens: msg.inputTokens as number,
+              outputTokens: msg.outputTokens as number,
+              cacheCreationTokens: (msg.cacheCreationTokens as number) ?? 0,
+              cacheReadTokens: (msg.cacheReadTokens as number) ?? 0,
+            },
+          };
+        });
       } else if (msg.type === 'stats') {
         setStats({
           activeAgents: msg.activeAgents as number,
           toolsRunning: msg.toolsRunning as number,
           sessionsToday: msg.sessionsToday as number,
+        });
+        // Recalculate total cost (closed + active agents)
+        setAgentInfos((prev) => {
+          let activeCost = 0;
+          for (const info of Object.values(prev)) {
+            activeCost += calculateCost(info);
+          }
+          setTotalCost(closedCostRef.current + activeCost);
+          return prev;
         });
       } else if (msg.type === 'agentStuck') {
         const id = msg.id as number;
@@ -459,5 +545,7 @@ export function useExtensionMessages(
     workspaceFolders: [],
     stats,
     stuckAgents,
+    totalCost,
+    closedSessions,
   };
 }

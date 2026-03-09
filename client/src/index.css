@@ -52,6 +52,40 @@
   --pixel-controls-z: 50;
 }
 
+/* Light theme overrides */
+body.theme-light {
+  --pixel-bg: #e8e4de;
+  --pixel-border: #b0a898;
+  --pixel-border-light: #908878;
+  --pixel-accent: #3a6cd8;
+  --pixel-green: #3a9060;
+  --pixel-shadow: 2px 2px 0px rgba(0, 0, 0, 0.15);
+
+  --pixel-text: rgba(30, 30, 40, 0.9);
+  --pixel-text-dim: rgba(30, 30, 40, 0.65);
+  --pixel-btn-bg: rgba(0, 0, 0, 0.06);
+  --pixel-btn-hover-bg: rgba(0, 0, 0, 0.12);
+
+  --pixel-active-bg: rgba(58, 108, 216, 0.2);
+
+  --pixel-agent-bg: rgba(58, 144, 96, 0.12);
+  --pixel-agent-hover-bg: rgba(58, 144, 96, 0.25);
+  --pixel-agent-border: #3a9060;
+  --pixel-agent-text: rgba(20, 80, 50, 0.95);
+
+  --pixel-close-text: rgba(0, 0, 0, 0.4);
+  --pixel-close-hover: #c33;
+
+  --pixel-hint-bg: #4a88d8;
+  --pixel-reset-text: #a44;
+  --pixel-danger-bg: #c44;
+
+  --pixel-vignette: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.1) 100%);
+
+  --pixel-status-permission: #b89400;
+  --pixel-status-active: #2a74e8;
+}
+
 html,
 body,
 #root {
@@ -61,6 +95,11 @@ body,
   overflow: hidden;
   font-family: 'FS Pixel Sans', sans-serif;
   background: #0a0a14;
+}
+
+body.theme-light,
+body.theme-light #root {
+  background: #d0ccc4;
 }
 
 * {

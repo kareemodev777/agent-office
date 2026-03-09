@@ -9,6 +9,24 @@ interface SettingsModalProps {
   onToggleDebugMode: () => void;
 }
 
+const THEME_KEY = 'agent-office-theme';
+
+export function getStoredTheme(): 'dark' | 'light' {
+  return (localStorage.getItem(THEME_KEY) as 'dark' | 'light') || 'dark';
+}
+
+export function applyTheme(theme: 'dark' | 'light'): void {
+  localStorage.setItem(THEME_KEY, theme);
+  if (theme === 'light') {
+    document.body.classList.add('theme-light');
+  } else {
+    document.body.classList.remove('theme-light');
+  }
+}
+
+// Apply theme on module load
+applyTheme(getStoredTheme());
+
 const menuItemBase: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -16,7 +34,7 @@ const menuItemBase: React.CSSProperties = {
   width: '100%',
   padding: '6px 10px',
   fontSize: '24px',
-  color: 'rgba(255, 255, 255, 0.8)',
+  color: 'var(--pixel-text)',
   background: 'transparent',
   border: 'none',
   borderRadius: 0,
@@ -32,8 +50,15 @@ export function SettingsModal({
 }: SettingsModalProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [soundLocal, setSoundLocal] = useState(isSoundEnabled);
+  const [theme, setTheme] = useState(getStoredTheme);
 
   if (!isOpen) return null;
+
+  const handleToggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    applyTheme(newTheme);
+  };
 
   return (
     <>
@@ -66,7 +91,7 @@ export function SettingsModal({
           minWidth: 200,
         }}
       >
-        {/* Header with title and X button */}
+        {/* Header */}
         <div
           style={{
             display: 'flex',
@@ -77,16 +102,16 @@ export function SettingsModal({
             marginBottom: '4px',
           }}
         >
-          <span style={{ fontSize: '24px', color: 'rgba(255, 255, 255, 0.9)' }}>Settings</span>
+          <span style={{ fontSize: '24px', color: 'var(--pixel-text)' }}>Settings</span>
           <button
             onClick={onClose}
             onMouseEnter={() => setHovered('close')}
             onMouseLeave={() => setHovered(null)}
             style={{
-              background: hovered === 'close' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+              background: hovered === 'close' ? 'var(--pixel-btn-hover-bg)' : 'transparent',
               border: 'none',
               borderRadius: 0,
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: 'var(--pixel-text-dim)',
               fontSize: '24px',
               cursor: 'pointer',
               padding: '0 4px',
@@ -96,7 +121,29 @@ export function SettingsModal({
             X
           </button>
         </div>
-        {/* Menu items */}
+        {/* Theme toggle */}
+        <button
+          onClick={handleToggleTheme}
+          onMouseEnter={() => setHovered('theme')}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            ...menuItemBase,
+            background: hovered === 'theme' ? 'var(--pixel-btn-hover-bg)' : 'transparent',
+          }}
+        >
+          <span>Theme</span>
+          <span
+            style={{
+              fontSize: '18px',
+              color: 'var(--pixel-accent)',
+              border: '1px solid var(--pixel-accent)',
+              padding: '0 6px',
+            }}
+          >
+            {theme === 'dark' ? 'Dark' : 'Light'}
+          </span>
+        </button>
+        {/* Sound */}
         <button
           onClick={() => {
             const newVal = !isSoundEnabled();
@@ -107,7 +154,7 @@ export function SettingsModal({
           onMouseLeave={() => setHovered(null)}
           style={{
             ...menuItemBase,
-            background: hovered === 'sound' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+            background: hovered === 'sound' ? 'var(--pixel-btn-hover-bg)' : 'transparent',
           }}
         >
           <span>Sound Notifications</span>
@@ -115,9 +162,9 @@ export function SettingsModal({
             style={{
               width: 14,
               height: 14,
-              border: '2px solid rgba(255, 255, 255, 0.5)',
+              border: '2px solid var(--pixel-border-light)',
               borderRadius: 0,
-              background: soundLocal ? 'rgba(90, 140, 255, 0.8)' : 'transparent',
+              background: soundLocal ? 'var(--pixel-accent)' : 'transparent',
               flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
@@ -130,13 +177,14 @@ export function SettingsModal({
             {soundLocal ? 'X' : ''}
           </span>
         </button>
+        {/* Debug */}
         <button
           onClick={onToggleDebugMode}
           onMouseEnter={() => setHovered('debug')}
           onMouseLeave={() => setHovered(null)}
           style={{
             ...menuItemBase,
-            background: hovered === 'debug' ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+            background: hovered === 'debug' ? 'var(--pixel-btn-hover-bg)' : 'transparent',
           }}
         >
           <span>Debug View</span>
@@ -146,7 +194,7 @@ export function SettingsModal({
                 width: 6,
                 height: 6,
                 borderRadius: '50%',
-                background: 'rgba(90, 140, 255, 0.8)',
+                background: 'var(--pixel-accent)',
                 flexShrink: 0,
               }}
             />

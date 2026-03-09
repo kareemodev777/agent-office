@@ -12,6 +12,8 @@ interface BottomToolbarProps {
   onToggleDebugMode: () => void;
   workspaceFolders: WorkspaceFolder[];
   onSpawnAgent?: () => void;
+  onShowHistory?: () => void;
+  onShowShortcuts?: () => void;
 }
 
 const panelStyle: React.CSSProperties = {
@@ -53,6 +55,8 @@ export function BottomToolbar({
   onToggleDebugMode,
   workspaceFolders,
   onSpawnAgent,
+  onShowHistory,
+  onShowShortcuts,
 }: BottomToolbarProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -178,6 +182,20 @@ export function BottomToolbar({
       >
         Layout
       </button>
+      {onShowHistory && (
+        <button
+          onClick={onShowHistory}
+          onMouseEnter={() => setHovered('history')}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            ...btnBase,
+            background: hovered === 'history' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+          }}
+          title="Session history"
+        >
+          History
+        </button>
+      )}
       <div style={{ position: 'relative' }}>
         <button
           onClick={() => setIsSettingsOpen((v) => !v)}
@@ -203,6 +221,22 @@ export function BottomToolbar({
           onToggleDebugMode={onToggleDebugMode}
         />
       </div>
+      {onShowShortcuts && (
+        <button
+          onClick={onShowShortcuts}
+          onMouseEnter={() => setHovered('shortcuts')}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            ...btnBase,
+            fontSize: '20px',
+            padding: '5px 8px',
+            background: hovered === 'shortcuts' ? 'var(--pixel-btn-hover-bg)' : btnBase.background,
+          }}
+          title="Keyboard shortcuts (?)"
+        >
+          ? Keys
+        </button>
+      )}
     </div>
   );
 }
