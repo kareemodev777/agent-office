@@ -189,10 +189,12 @@ export function useExtensionMessages(
           cacheReadTokens: number;
           startedAt: number;
           tools: Array<{ toolId: string; status: string }>;
+          subagents?: Array<{ parentToolId: string; tools: Array<{ toolId: string; status: string }> }>;
         }>;
         const meta = loadAgentSeats();
         const ids: number[] = [];
         const infos: Record<number, AgentInfo> = {};
+        const newSubChars: SubagentCharacter[] = [];
         for (const a of incoming) {
           ids.push(a.id);
           infos[a.id] = {
@@ -212,11 +214,39 @@ export function useExtensionMessages(
             const toolName = extractToolName(tool.status);
             os.setAgentTool(a.id, toolName);
             os.setAgentActive(a.id, true);
+            // Spawn sub-agent characters for Task tools
+            if (tool.status.startsWith('Subtask:')) {
+              const label = tool.status.slice('Subtask:'.length).trim();
+              const subId = os.addSubagent(a.id, tool.toolId);
+              newSubChars.push({ id: subId, parentAgentId: a.id, parentToolId: tool.toolId, label });
+            }
+          }
+          // Also restore sub-agents from snapshot subagents array
+          if (a.subagents) {
+            for (const sub of a.subagents) {
+              // Only add if not already added via tool status above
+              const existing = os.getSubagentId(a.id, sub.parentToolId);
+              if (existing === null) {
+                const subId = os.addSubagent(a.id, sub.parentToolId);
+                newSubChars.push({ id: subId, parentAgentId: a.id, parentToolId: sub.parentToolId, label: '' });
+              }
+              for (const subTool of sub.tools) {
+                const subId = os.getSubagentId(a.id, sub.parentToolId);
+                if (subId !== null) {
+                  const subToolName = extractToolName(subTool.status);
+                  os.setAgentTool(subId, subToolName);
+                  os.setAgentActive(subId, true);
+                }
+              }
+            }
           }
           if (a.isWaiting) {
             os.setAgentActive(a.id, false);
             os.showWaitingBubble(a.id);
           }
+        }
+        if (newSubChars.length > 0) {
+          setSubagentCharacters(newSubChars);
         }
         setAgents(ids);
         setAgentInfos(infos);

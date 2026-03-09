@@ -118,9 +118,27 @@ export function addAgent(jsonlFile: string, broadcast: BroadcastFn): number {
   }
   sessionsSeenToday.add(id);
 
-  // Skip to end of file (only process new lines)
+  // Read last ~50KB of file to discover active sub-agents and metadata
   try {
     const stat = fs.statSync(jsonlFile);
+    const TAIL_BYTES = 50 * 1024;
+    const readFrom = Math.max(0, stat.size - TAIL_BYTES);
+    const buf = Buffer.alloc(stat.size - readFrom);
+    const fd = fs.openSync(jsonlFile, 'r');
+    fs.readSync(fd, buf, 0, buf.length, readFrom);
+    fs.closeSync(fd);
+
+    const text = buf.toString('utf-8');
+    const lines = text.split('\n');
+    // If we started mid-file, first line may be partial — skip it
+    if (readFrom > 0) lines.shift();
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      processTranscriptLine(id, line, agents, waitingTimers, permissionTimers, broadcast);
+    }
+
+    // Set offset to end so we only get new lines going forward
     agent.fileOffset = stat.size;
   } catch {
     // File may not exist yet
@@ -291,12 +309,23 @@ export function getSnapshot(): Array<{
   cacheReadTokens: number;
   startedAt: number;
   tools: Array<{ toolId: string; status: string }>;
+  subagents: Array<{ parentToolId: string; tools: Array<{ toolId: string; status: string }> }>;
 }> {
   const result = [];
   for (const agent of agents.values()) {
     const tools = [];
     for (const [toolId, status] of agent.activeToolStatuses) {
       tools.push({ toolId, status });
+    }
+    const subagents = [];
+    for (const [parentToolId, subToolIds] of agent.activeSubagentToolIds) {
+      const subTools: Array<{ toolId: string; status: string }> = [];
+      for (const subToolId of subToolIds) {
+        const subNames = agent.activeSubagentToolNames.get(parentToolId);
+        const toolName = subNames?.get(subToolId) || '';
+        subTools.push({ toolId: subToolId, status: `Using ${toolName}` });
+      }
+      subagents.push({ parentToolId, tools: subTools });
     }
     result.push({
       id: agent.id,
@@ -311,6 +340,7 @@ export function getSnapshot(): Array<{
       cacheReadTokens: agent.cacheReadTokens,
       startedAt: agent.startedAt,
       tools,
+      subagents,
     });
   }
   return result;

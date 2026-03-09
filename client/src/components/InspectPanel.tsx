@@ -33,30 +33,68 @@ function parseLine(raw: string): ParsedLine | null {
 
     if (obj.type === 'assistant' || obj.role === 'assistant') {
       const content = obj.message?.content || obj.content || '';
-      let preview = '';
-      let toolName: string | undefined;
+      const results: ParsedLine[] = [];
 
       if (Array.isArray(content)) {
         const textBlocks: string[] = [];
         for (const b of content) {
           if (b.type === 'text' && b.text) textBlocks.push(b.text);
-          if (b.type === 'tool_use') toolName = b.name;
+          if (b.type === 'tool_use' && b.name) {
+            const name = b.name as string;
+            const input = b.input || {};
+            if (name === 'Task' || name === 'Agent') {
+              const desc = typeof input.description === 'string' ? input.description : '';
+              const subType = typeof input.subagent_type === 'string' ? input.subagent_type : '';
+              const prefix = subType ? `[${subType}] ` : '';
+              const summary = desc ? `${prefix}${desc}` : `Starting ${name.toLowerCase()}`;
+              const type = name === 'Task' ? 'task' : 'agent';
+              results.push({ type, summary, timestamp, toolName: name });
+            } else {
+              const inputStr = formatToolInput(name, input);
+              const summary = inputStr ? `${name}: ${inputStr}` : name;
+              results.push({ type: 'tool', summary, timestamp, toolName: name });
+            }
+          }
         }
-        if (toolName) {
-          return { type: 'tool', summary: `${toolName}`, timestamp, toolName };
-        }
-        preview = textBlocks.join(' ').slice(0, 120);
+        // If we found tool_use blocks, return the first one (most important)
+        if (results.length > 0) return results[0];
+        // Otherwise show the text content
+        const preview = textBlocks.join(' ').split('\n').find(l => l.trim())?.trim().slice(0, 120);
+        if (preview) return { type: 'assistant', summary: preview, timestamp };
+        return { type: 'assistant', summary: '(thinking)', timestamp };
       } else if (typeof content === 'string') {
-        preview = content.slice(0, 120);
+        const preview = content.slice(0, 120);
+        return { type: 'assistant', summary: preview || '(thinking)', timestamp };
       }
-      return { type: 'assistant', summary: preview || '(thinking)', timestamp };
+      return { type: 'assistant', summary: '(thinking)', timestamp };
     }
 
     if (obj.type === 'user' || obj.role === 'user') {
       const content = obj.message?.content || obj.content || '';
       if (Array.isArray(content)) {
-        const hasToolResult = content.some((b: { type: string }) => b.type === 'tool_result');
-        if (hasToolResult) return null; // Skip tool results in display
+        const toolResults = content.filter((b: { type: string }) => b.type === 'tool_result');
+        if (toolResults.length > 0) {
+          // Show tool result summaries instead of skipping
+          for (const tr of toolResults) {
+            const resultContent = tr.content;
+            let preview = '';
+            if (typeof resultContent === 'string') {
+              preview = resultContent.split('\n').find((l: string) => l.trim())?.trim().slice(0, 80) || '';
+            } else if (Array.isArray(resultContent)) {
+              const textBlock = resultContent.find((b: { type: string }) => b.type === 'text');
+              if (textBlock?.text) {
+                preview = textBlock.text.split('\n').find((l: string) => l.trim())?.trim().slice(0, 80) || '';
+              }
+            }
+            if (tr.is_error) {
+              return { type: 'error', summary: preview || 'Tool error', timestamp };
+            }
+            if (preview) {
+              return { type: 'result', summary: preview, timestamp };
+            }
+          }
+          return null;
+        }
         const text = content.map((b: { type: string; text?: string }) =>
           b.type === 'text' ? b.text || '' : ''
         ).join(' ').trim();
@@ -72,12 +110,58 @@ function parseLine(raw: string): ParsedLine | null {
       return { type: 'system', summary: 'Turn complete', timestamp };
     }
 
-    // Skip other system/progress records
-    if (obj.type === 'system' || obj.type === 'progress') return null;
+    // Progress records — extract useful info from TodoWrite, subagent activity
+    if (obj.type === 'progress') {
+      const data = obj.data;
+      if (data?.type === 'todo_update' && data.text) {
+        const status = data.status === 'completed' ? 'Done' : data.status || '';
+        return { type: 'system', summary: `[${status}] ${data.text}`.slice(0, 120), timestamp };
+      }
+      // Show subagent text activity
+      if (data?.message?.type === 'assistant') {
+        const innerContent = data.message.message?.content;
+        if (Array.isArray(innerContent)) {
+          for (const b of innerContent) {
+            if (b.type === 'tool_use' && b.name) {
+              const inputStr = formatToolInput(b.name, b.input || {});
+              return { type: 'tool', summary: `Sub: ${b.name}${inputStr ? ': ' + inputStr : ''}`, timestamp, toolName: b.name };
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    if (obj.type === 'system') return null;
 
     return null;
   } catch {
     return null;
+  }
+}
+
+function formatToolInput(toolName: string, input: Record<string, unknown>): string {
+  switch (toolName) {
+    case 'Read':
+    case 'Edit':
+    case 'Write': {
+      const fp = input.file_path;
+      if (typeof fp === 'string') {
+        const parts = fp.split('/');
+        return parts[parts.length - 1] || '';
+      }
+      return '';
+    }
+    case 'Bash': {
+      const cmd = typeof input.command === 'string' ? input.command : '';
+      return cmd.slice(0, 80);
+    }
+    case 'Grep':
+      return typeof input.pattern === 'string' ? `"${input.pattern.slice(0, 60)}"` : '';
+    case 'Glob':
+      return typeof input.pattern === 'string' ? input.pattern.slice(0, 60) : '';
+    default:
+      return '';
   }
 }
 
@@ -86,6 +170,10 @@ function typeColor(type: string): string {
     case 'user': return '#7ec8e3';
     case 'assistant': return '#a8d8a8';
     case 'tool': return '#e8c87e';
+    case 'task': return '#e8a04e';
+    case 'agent': return '#c8a8e8';
+    case 'result': return '#8e8e8e';
+    case 'error': return '#e87e7e';
     case 'system': return '#888';
     default: return 'var(--pixel-text-dim)';
   }
@@ -96,6 +184,10 @@ function typeLabel(type: string): string {
     case 'user': return 'USR';
     case 'assistant': return 'AST';
     case 'tool': return 'TUL';
+    case 'task': return 'TSK';
+    case 'agent': return 'AGT';
+    case 'result': return 'RES';
+    case 'error': return 'ERR';
     case 'system': return 'SYS';
     default: return type.slice(0, 3).toUpperCase();
   }
