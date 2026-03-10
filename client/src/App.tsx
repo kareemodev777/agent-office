@@ -595,6 +595,7 @@ function App() {
           agentId={inspectAgentId}
           agentLabel={inspectInfo?.label}
           agentRole={inspectInfo?.role}
+          agentProjectPath={inspectInfo?.projectPath}
           onClose={() => {
             setInspectAgentId(null);
             transport.postMessage({ type: 'unsubscribeAgent', id: inspectAgentId });

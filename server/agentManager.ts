@@ -37,6 +37,31 @@ export function getAgentById(id: number): AgentState | undefined {
   return agents.get(id);
 }
 
+export function deriveProjectPath(jsonlPath: string): string {
+  const dir = path.basename(path.dirname(jsonlPath));
+  if (!dir.startsWith('-')) return '';
+
+  // Claude Code encodes CWD: /Users/foo/Projects/bar → -Users-foo-Projects-bar
+  // Find known project folder markers to split correctly
+  const markers = ['-Projects-', '-projects-', '-repos-', '-src-', '-code-', '-dev-', '-workspace-'];
+  for (const marker of markers) {
+    const idx = dir.indexOf(marker);
+    if (idx !== -1) {
+      const projectName = dir.slice(idx + marker.length);
+      const markerWord = marker.slice(1, -1);
+      return `~/${markerWord}/${projectName}`;
+    }
+  }
+
+  // Fallback: use home dir to shorten
+  const homeEncoded = os.homedir().replace(/\//g, '-');
+  if (dir.startsWith(homeEncoded + '-')) {
+    return '~/' + dir.slice(homeEncoded.length + 1);
+  }
+
+  return '';
+}
+
 export function deriveLabel(jsonlPath: string): string {
   const dir = path.dirname(jsonlPath);
   const dirName = path.basename(dir);
@@ -144,8 +169,9 @@ export function addAgent(jsonlFile: string, broadcast: BroadcastFn): number {
     // File may not exist yet
   }
 
+  const projectPath = deriveProjectPath(jsonlFile);
   console.log(`[Agent Office] Agent ${id} created: "${label}" (${path.basename(jsonlFile)})`);
-  broadcast({ type: 'agentCreated', id, label });
+  broadcast({ type: 'agentCreated', id, label, projectPath });
   return id;
 }
 
@@ -302,6 +328,7 @@ export function getSnapshot(): Array<{
   slug: string | null;
   role: string | null;
   gitBranch: string | null;
+  projectPath: string;
   isWaiting: boolean;
   inputTokens: number;
   outputTokens: number;
@@ -333,6 +360,7 @@ export function getSnapshot(): Array<{
       slug: agent.slug,
       role: agent.role,
       gitBranch: agent.gitBranch,
+      projectPath: deriveProjectPath(agent.jsonlFile),
       isWaiting: agent.isWaiting,
       inputTokens: agent.inputTokens,
       outputTokens: agent.outputTokens,

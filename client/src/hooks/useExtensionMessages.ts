@@ -42,6 +42,7 @@ export interface AgentInfo {
   slug: string | null;
   role: string | null;
   gitBranch: string | null;
+  projectPath: string;
   inputTokens: number;
   outputTokens: number;
   cacheCreationTokens: number;
@@ -207,6 +208,7 @@ export function useExtensionMessages(
           slug: string | null;
           role: string | null;
           gitBranch: string | null;
+          projectPath?: string;
           isWaiting: boolean;
           inputTokens: number;
           outputTokens: number;
@@ -227,6 +229,7 @@ export function useExtensionMessages(
             slug: a.slug,
             role: a.role,
             gitBranch: a.gitBranch,
+            projectPath: a.projectPath || '',
             inputTokens: a.inputTokens,
             outputTokens: a.outputTokens,
             cacheCreationTokens: a.cacheCreationTokens ?? 0,
@@ -281,6 +284,7 @@ export function useExtensionMessages(
       } else if (msg.type === 'agentCreated') {
         const id = msg.id as number;
         const label = msg.label as string | undefined;
+        const projectPath = (msg.projectPath as string) || '';
         setAgents((prev) => (prev.includes(id) ? prev : [...prev, id]));
         setAgentInfos((prev) => ({
           ...prev,
@@ -289,6 +293,7 @@ export function useExtensionMessages(
             slug: null,
             role: null,
             gitBranch: null,
+            projectPath,
             inputTokens: 0,
             outputTokens: 0,
             cacheCreationTokens: 0,
@@ -365,9 +370,12 @@ export function useExtensionMessages(
           ...prev,
           [id]: { ...prev[id], label, slug },
         }));
-        // Update character folderName
+        // Update character folderName and refresh room assignments
         const ch = os.characters.get(id);
-        if (ch) ch.folderName = label;
+        if (ch) {
+          ch.folderName = label;
+          os.refreshRoomProjects();
+        }
       } else if (msg.type === 'agentRoleUpdate') {
         const id = msg.id as number;
         const role = msg.role as string;

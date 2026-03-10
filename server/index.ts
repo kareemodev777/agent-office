@@ -19,6 +19,7 @@ import {
   subscribeInspect,
   unsubscribeInspect,
   unsubscribeAllInspect,
+  deriveProjectPath,
 } from './agentManager.js';
 import { startWatching } from './watcher.js';
 import {
@@ -158,6 +159,7 @@ wss.on('connection', (ws) => {
           slug: agent?.slug,
           role: agent?.role,
           gitBranch: agent?.gitBranch,
+          projectPath: agent ? deriveProjectPath(agent.jsonlFile) : '',
           inputTokens: agent?.inputTokens ?? 0,
           outputTokens: agent?.outputTokens ?? 0,
           cacheCreationTokens: agent?.cacheCreationTokens ?? 0,

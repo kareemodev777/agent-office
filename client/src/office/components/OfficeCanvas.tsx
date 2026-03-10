@@ -20,7 +20,7 @@ import type {
   RotateButtonBounds,
   SelectionRenderState,
 } from '../engine/renderer.js';
-import { renderFrame } from '../engine/renderer.js';
+import { renderFrame, renderRoomLabels } from '../engine/renderer.js';
 import { getCatalogEntry, isRotatable } from '../layout/furnitureCatalog.js';
 import { EditTool, TILE_SIZE } from '../types.js';
 
@@ -263,6 +263,10 @@ export function OfficeCanvas({
           officeState.getLayout().cols,
           officeState.getLayout().rows,
         );
+        // Room labels (rendered on top of everything)
+        const roomLabels = officeState.getRoomLabels();
+        renderRoomLabels(ctx, roomLabels, offsetX, offsetY, zoom);
+
         offsetRef.current = { x: offsetX, y: offsetY };
 
         // Store delete/rotate button bounds for hit-testing
