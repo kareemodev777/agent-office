@@ -65,6 +65,22 @@ export function calculateCost(info: {
   );
 }
 
+export interface SystemProcessStats {
+  pid: number;
+  cpu: number;
+  memMB: number;
+  cmd: string;
+}
+
+export interface SystemStats {
+  cpuPercent: number;
+  memUsedMB: number;
+  memTotalMB: number;
+  memPercent: number;
+  processes: SystemProcessStats[];
+  estimatedCapacity: number;
+}
+
 export interface ClosedSession {
   id: number;
   label: string;
@@ -94,6 +110,7 @@ export interface ExtensionMessageState {
   totalCost: number;
   closedSessions: ClosedSession[];
   textPreviews: Record<number, { text: string; timestamp: number }>;
+  systemStats: SystemStats;
 }
 
 function saveAgentSeats(os: OfficeState): void {
@@ -148,6 +165,14 @@ export function useExtensionMessages(
   const [totalCost, setTotalCost] = useState(0);
   const [closedSessions, setClosedSessions] = useState<ClosedSession[]>([]);
   const [textPreviews, setTextPreviews] = useState<Record<number, { text: string; timestamp: number }>>({});
+  const [systemStats, setSystemStats] = useState<SystemStats>({
+    cpuPercent: 0,
+    memUsedMB: 0,
+    memTotalMB: 0,
+    memPercent: 0,
+    processes: [],
+    estimatedCapacity: 0,
+  });
   const closedCostRef = useRef(0);
 
   const layoutReadyRef = useRef(false);
@@ -572,6 +597,15 @@ export function useExtensionMessages(
         const id = msg.id as number;
         const text = msg.text as string;
         setTextPreviews((prev) => ({ ...prev, [id]: { text, timestamp: Date.now() } }));
+      } else if (msg.type === 'systemStats') {
+        setSystemStats({
+          cpuPercent: msg.cpuPercent as number,
+          memUsedMB: msg.memUsedMB as number,
+          memTotalMB: msg.memTotalMB as number,
+          memPercent: msg.memPercent as number,
+          processes: (msg.processes as SystemProcessStats[]) || [],
+          estimatedCapacity: msg.estimatedCapacity as number,
+        });
       }
     });
 
@@ -594,5 +628,6 @@ export function useExtensionMessages(
     totalCost,
     closedSessions,
     textPreviews,
+    systemStats,
   };
 }

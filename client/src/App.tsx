@@ -161,6 +161,7 @@ function App() {
     totalCost,
     closedSessions,
     textPreviews,
+    systemStats,
   } = useExtensionMessages(getOfficeState, editor.setLastSavedLayout, isEditDirty);
 
   const [isDebugMode, setIsDebugMode] = useState(false);
@@ -402,6 +403,7 @@ function App() {
           sessionsToday={stats.sessionsToday}
           totalCost={totalCost}
           agentInfos={agentInfos}
+          systemStats={systemStats}
         />
       )}
 

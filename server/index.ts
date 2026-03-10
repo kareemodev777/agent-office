@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { WebSocketServer, WebSocket } from 'ws';
 import { execSync, spawn as cpSpawn } from 'child_process';
 import { SERVER_PORT, STUCK_CHECK_INTERVAL_MS, STATS_BROADCAST_INTERVAL_MS } from './constants.js';
+import { getSystemStats } from './systemStats.js';
 import {
   getSnapshot,
   getRecentLines,
@@ -280,6 +281,9 @@ setInterval(() => {
       cacheReadTokens: agent.cacheReadTokens,
     });
   }
+  // Broadcast system resource utilisation
+  const sysStats = getSystemStats();
+  broadcast({ type: 'systemStats', ...sysStats });
 }, STATS_BROADCAST_INTERVAL_MS);
 
 // Periodic stuck detection
