@@ -5,6 +5,8 @@ import {
   TEXT_IDLE_DELAY_MS,
   TOOL_DONE_DELAY_MS,
 } from './constants.js';
+import { trackFileAccess, clearAgentFiles, extractFileFromStatus } from './coordination.js';
+import { recordToolUsage, setIdle } from './taskTracker.js';
 import {
   cancelPermissionTimer,
   cancelWaitingTimer,
@@ -178,6 +180,30 @@ export function processTranscriptLine(
               status,
             });
 
+            // Track file access for coordination
+            const touchedFile = extractFileFromStatus(status);
+            if (touchedFile) {
+              const conflict = trackFileAccess(agentId, touchedFile, agents);
+              if (conflict) {
+                broadcast({
+                  type: 'fileConflict',
+                  file: conflict.file,
+                  agentIds: conflict.agentIds,
+                  detectedAt: conflict.detectedAt,
+                });
+              }
+            }
+
+            // Track phase transitions
+            const { phase, changed } = recordToolUsage(agentId, toolName, status);
+            if (changed) {
+              broadcast({
+                type: 'agentPhaseUpdate',
+                id: agentId,
+                phase,
+              });
+            }
+
             // Detect role from Task tool descriptions
             if (toolName === 'Task' && !agent.role && block.input) {
               const desc = typeof block.input.description === 'string' ? block.input.description : '';
@@ -263,6 +289,11 @@ export function processTranscriptLine(
       agent.isWaiting = true;
       agent.permissionSent = false;
       agent.hadToolsInTurn = false;
+      clearAgentFiles(agentId);
+      const { changed: idleChanged } = setIdle(agentId);
+      if (idleChanged) {
+        broadcast({ type: 'agentPhaseUpdate', id: agentId, phase: 'idle' });
+      }
       broadcast({
         type: 'agentStatus',
         id: agentId,

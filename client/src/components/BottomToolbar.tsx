@@ -15,6 +15,9 @@ interface BottomToolbarProps {
   onShowHistory?: () => void;
   onShowShortcuts?: () => void;
   onToggleWidget?: () => void;
+  onToggleActivity?: () => void;
+  showActivity?: boolean;
+  onToggleConsole?: () => void;
 }
 
 const panelStyle: React.CSSProperties = {
@@ -63,6 +66,9 @@ export function BottomToolbar({
   onShowHistory,
   onShowShortcuts,
   onToggleWidget,
+  onToggleActivity,
+  showActivity,
+  onToggleConsole,
 }: BottomToolbarProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -184,6 +190,38 @@ export function BottomToolbar({
           title="Compact widget mode (W)"
         >
           Widget
+        </button>
+      )}
+      {onToggleActivity && (
+        <button
+          onClick={onToggleActivity}
+          onMouseEnter={() => setHovered('activity')}
+          onMouseLeave={() => setHovered(null)}
+          style={
+            showActivity
+              ? { ...btnActive }
+              : {
+                  ...btnBase,
+                  background: hovered === 'activity' ? 'var(--btn-hover)' : btnBase.background,
+                }
+          }
+          title="Activity board (A)"
+        >
+          Activity
+        </button>
+      )}
+      {onToggleConsole && (
+        <button
+          onClick={onToggleConsole}
+          onMouseEnter={() => setHovered('console')}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            ...btnBase,
+            background: hovered === 'console' ? 'var(--btn-hover)' : btnBase.background,
+          }}
+          title="Console mode (C)"
+        >
+          Console
         </button>
       )}
       <button
