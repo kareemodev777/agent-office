@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { WebSocketServer, WebSocket } from 'ws';
 import { execSync, spawn as cpSpawn } from 'child_process';
 import { SERVER_PORT, STUCK_CHECK_INTERVAL_MS, STATS_BROADCAST_INTERVAL_MS } from './constants.js';
+import { getSystemStats } from './systemStats.js';
 import {
   getSnapshot,
   getRecentLines,
@@ -18,7 +19,10 @@ import {
   subscribeInspect,
   unsubscribeInspect,
   unsubscribeAllInspect,
+  deriveProjectPath,
 } from './agentManager.js';
+import { getProjectGroups, removeAgentTracking, getAgentFiles } from './coordination.js';
+import { initTracker, removeTracker, getPhaseInfo } from './taskTracker.js';
 import { startWatching } from './watcher.js';
 import {
   loadPersistence,
@@ -28,6 +32,8 @@ import {
   getData,
   updateSettings,
   clearHistory,
+  updateProjectHistory,
+  getProjectHistory,
 } from './persistence.js';
 import { sendWebhook, setWebhookUrl, getConfiguredWebhookUrl } from './webhooks.js';
 import type { SessionRecord } from './persistence.js';
@@ -67,9 +73,21 @@ function broadcastWithHooks(msg: unknown): void {
   broadcast(msg);
 
   const m = msg as Record<string, unknown>;
-  if (m.type === 'agentClosed') {
+  if (m.type === 'agentCreated') {
+    initTracker(m.id as number);
+  } else if (m.type === 'agentClosed') {
     const agentId = m.id as number;
+    // Save project history before removing tracking
     const agent = getAgentById(agentId);
+    if (agent) {
+      const projectPath = deriveProjectPath(agent.jsonlFile);
+      const files = getAgentFiles(agentId);
+      const cost = (agent.inputTokens * 3 + agent.outputTokens * 15 +
+        agent.cacheCreationTokens * 3.75 + agent.cacheReadTokens * 0.3) / 1_000_000;
+      updateProjectHistory(projectPath, cost, files);
+    }
+    removeAgentTracking(agentId);
+    removeTracker(agentId);
     if (agent) {
       const session: SessionRecord = {
         id: agent.id,
@@ -130,6 +148,14 @@ wss.on('connection', (ws) => {
   const stats = getStats();
   ws.send(JSON.stringify({ type: 'stats', ...stats }));
 
+  // Send initial coordination data
+  const initGroups = getProjectGroups(getAgents());
+  const initPhases: Record<number, ReturnType<typeof getPhaseInfo>> = {};
+  for (const agent of getAgents().values()) {
+    initPhases[agent.id] = getPhaseInfo(agent.id);
+  }
+  ws.send(JSON.stringify({ type: 'coordination', groups: initGroups, phases: initPhases }));
+
   ws.on('close', () => {
     clients.delete(ws);
     unsubscribeAllInspect(ws);
@@ -157,6 +183,7 @@ wss.on('connection', (ws) => {
           slug: agent?.slug,
           role: agent?.role,
           gitBranch: agent?.gitBranch,
+          projectPath: agent ? deriveProjectPath(agent.jsonlFile) : '',
           inputTokens: agent?.inputTokens ?? 0,
           outputTokens: agent?.outputTokens ?? 0,
           cacheCreationTokens: agent?.cacheCreationTokens ?? 0,
@@ -206,7 +233,8 @@ wss.on('connection', (ws) => {
         }
       } else if (msg.type === 'getHistory') {
         const d = getData();
-        ws.send(JSON.stringify({ type: 'history', sessions: d.sessions, dailyCosts: d.dailyCosts, totalSessions: d.totalSessions }));
+        const projectHist = getProjectHistory();
+        ws.send(JSON.stringify({ type: 'history', sessions: d.sessions, dailyCosts: d.dailyCosts, totalSessions: d.totalSessions, projectHistory: projectHist }));
       } else if (msg.type === 'clearHistory') {
         clearHistory();
         ws.send(JSON.stringify({ type: 'historyCleared' }));
@@ -219,6 +247,13 @@ wss.on('connection', (ws) => {
       } else if (msg.type === 'getSettings') {
         const d = getData();
         ws.send(JSON.stringify({ type: 'settings', settings: d.settings, webhookUrl: getConfiguredWebhookUrl() }));
+      } else if (msg.type === 'getCoordination') {
+        const groups = getProjectGroups(getAgents());
+        const phases: Record<number, ReturnType<typeof getPhaseInfo>> = {};
+        for (const agent of getAgents().values()) {
+          phases[agent.id] = getPhaseInfo(agent.id);
+        }
+        ws.send(JSON.stringify({ type: 'coordination', groups, phases }));
       } else if (msg.type === 'searchTranscripts') {
         const query = (msg.query as string || '').trim();
         if (query.length < 2) {
@@ -280,6 +315,17 @@ setInterval(() => {
       cacheReadTokens: agent.cacheReadTokens,
     });
   }
+  // Broadcast system resource utilisation
+  const sysStats = getSystemStats();
+  broadcast({ type: 'systemStats', ...sysStats });
+
+  // Broadcast coordination data (project groups + phases)
+  const groups = getProjectGroups(getAgents());
+  const phases: Record<number, ReturnType<typeof getPhaseInfo>> = {};
+  for (const agent of getAgents().values()) {
+    phases[agent.id] = getPhaseInfo(agent.id);
+  }
+  broadcast({ type: 'coordination', groups, phases });
 }, STATS_BROADCAST_INTERVAL_MS);
 
 // Periodic stuck detection

@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 
+import { ActivityBoard } from './components/ActivityBoard.js';
 import { BottomToolbar } from './components/BottomToolbar.js';
+import { ConsoleMode } from './components/ConsoleMode.js';
 import { ContextMenu } from './components/ContextMenu.js';
 import { DebugView } from './components/DebugView.js';
 import { HistoryPanel } from './components/HistoryPanel.js';
@@ -161,6 +163,11 @@ function App() {
     totalCost,
     closedSessions,
     textPreviews,
+    systemStats,
+    agentPhases,
+    projectGroups,
+    fileConflicts,
+    activityFeed,
   } = useExtensionMessages(getOfficeState, editor.setLastSavedLayout, isEditDirty);
 
   const [isDebugMode, setIsDebugMode] = useState(false);
@@ -177,6 +184,8 @@ function App() {
     try { return localStorage.getItem(WIDGET_MODE_KEY) === 'true'; } catch { return false; }
   });
   const [showSearch, setShowSearch] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
+  const [isConsoleMode, setIsConsoleMode] = useState(false);
 
   const handleSelectAgent = useCallback((_id: number) => {
     // No-op in standalone (no terminal to focus)
@@ -335,6 +344,26 @@ function App() {
 
   const inspectInfo = inspectAgentId !== null ? agentInfos[inspectAgentId] : undefined;
 
+  // Console mode
+  if (isConsoleMode) {
+    return (
+      <ConsoleMode
+        agents={agents}
+        agentInfos={agentInfos}
+        agentTools={agentTools}
+        agentPhases={agentPhases}
+        activityFeed={activityFeed}
+        fileConflicts={fileConflicts}
+        totalCost={totalCost}
+        onExit={() => setIsConsoleMode(false)}
+        onInspect={(id) => {
+          setInspectAgentId(id);
+          setIsConsoleMode(false);
+        }}
+      />
+    );
+  }
+
   // Widget mode
   if (isWidgetMode) {
     return (
@@ -402,6 +431,7 @@ function App() {
           sessionsToday={stats.sessionsToday}
           totalCost={totalCost}
           agentInfos={agentInfos}
+          systemStats={systemStats}
         />
       )}
 
@@ -463,6 +493,9 @@ function App() {
         onShowHistory={() => setShowHistory(true)}
         onShowShortcuts={() => setShowShortcuts(true)}
         onToggleWidget={handleToggleWidget}
+        onToggleActivity={() => setShowActivity((v) => !v)}
+        showActivity={showActivity}
+        onToggleConsole={() => setIsConsoleMode(true)}
       />
 
       {/* Aggregate cost bar */}
@@ -593,6 +626,7 @@ function App() {
           agentId={inspectAgentId}
           agentLabel={inspectInfo?.label}
           agentRole={inspectInfo?.role}
+          agentProjectPath={inspectInfo?.projectPath}
           onClose={() => {
             setInspectAgentId(null);
             transport.postMessage({ type: 'unsubscribeAgent', id: inspectAgentId });
@@ -673,6 +707,24 @@ function App() {
           agentInfos={agentInfos}
           closedSessions={closedSessions}
           onClose={() => setShowHistory(false)}
+          onInspect={(id) => {
+            setInspectAgentId(id);
+            const os = getOfficeState();
+            os.selectedAgentId = id;
+          }}
+        />
+      )}
+
+      {/* Activity Board */}
+      {showActivity && (
+        <ActivityBoard
+          agents={agents}
+          agentInfos={agentInfos}
+          agentPhases={agentPhases}
+          projectGroups={projectGroups}
+          fileConflicts={fileConflicts}
+          activityFeed={activityFeed}
+          onClose={() => setShowActivity(false)}
           onInspect={(id) => {
             setInspectAgentId(id);
             const os = getOfficeState();

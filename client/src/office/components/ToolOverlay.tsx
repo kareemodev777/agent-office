@@ -138,7 +138,6 @@ export function ToolOverlay({
         const roleColor = role ? ROLE_COLORS[role] : undefined;
         const displayLabel = info?.slug || info?.label;
         const projectName = info?.label;
-        const showProject = projectName && projectName !== displayLabel;
 
         return (
           <div
@@ -252,17 +251,22 @@ export function ToolOverlay({
                       </span>
                     )}
                     </div>
-                    {showProject && (
+                    {projectName && (
                       <span
                         style={{
                           fontSize: 'var(--text-sm)',
-                          color: '#BF5AF2',
+                          color: '#8E8E93',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
-                          opacity: 0.85,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 3,
                         }}
                       >
+                        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                          <path d="M1.5 2.5h5l2 2h6v9h-13z" stroke="#8E8E93" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+                        </svg>
                         {projectName}
                       </span>
                     )}

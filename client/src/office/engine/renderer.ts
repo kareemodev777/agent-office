@@ -455,6 +455,52 @@ export function renderRotateButton(
   return { cx, cy, radius };
 }
 
+// ── Room labels ─────────────────────────────────────────────────
+
+export function renderRoomLabels(
+  ctx: CanvasRenderingContext2D,
+  roomLabels: Array<{ centerCol: number; label: string }>,
+  offsetX: number,
+  offsetY: number,
+  zoom: number,
+): void {
+  if (roomLabels.length === 0) return;
+
+  const s = TILE_SIZE * zoom;
+  ctx.save();
+
+  const fontSize = Math.max(9, Math.round(10 * zoom));
+  ctx.font = `600 ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (const room of roomLabels) {
+    if (!room.label) continue;
+
+    const x = offsetX + (room.centerCol + 0.5) * s;
+    const y = offsetY + 0.5 * s; // center of wall row
+
+    const metrics = ctx.measureText(room.label);
+    const padX = 6 * zoom;
+    const padY = 3 * zoom;
+    const pillW = metrics.width + padX * 2;
+    const pillH = fontSize + padY * 2;
+    const radius = pillH / 2;
+
+    // Background pill
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.beginPath();
+    ctx.roundRect(x - pillW / 2, y - pillH / 2, pillW, pillH, radius);
+    ctx.fill();
+
+    // Text
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillText(room.label, x, y + 0.5);
+  }
+
+  ctx.restore();
+}
+
 // ── Sub-agent connecting lines ───────────────────────────────────
 
 export function renderSubagentLines(

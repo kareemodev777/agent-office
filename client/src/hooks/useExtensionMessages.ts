@@ -42,6 +42,7 @@ export interface AgentInfo {
   slug: string | null;
   role: string | null;
   gitBranch: string | null;
+  projectPath: string;
   inputTokens: number;
   outputTokens: number;
   cacheCreationTokens: number;
@@ -65,6 +66,22 @@ export function calculateCost(info: {
   );
 }
 
+export interface SystemProcessStats {
+  pid: number;
+  cpu: number;
+  memMB: number;
+  cmd: string;
+}
+
+export interface SystemStats {
+  cpuPercent: number;
+  memUsedMB: number;
+  memTotalMB: number;
+  memPercent: number;
+  processes: SystemProcessStats[];
+  estimatedCapacity: number;
+}
+
 export interface ClosedSession {
   id: number;
   label: string;
@@ -76,6 +93,37 @@ export interface ClosedSession {
   cacheCreationTokens: number;
   cacheReadTokens: number;
   closedAt: number;
+}
+
+export type AgentPhase = 'exploring' | 'planning' | 'coding' | 'testing' | 'reviewing' | 'idle';
+
+export interface PhaseInfo {
+  phase: AgentPhase;
+  filesRead: number;
+  filesModified: number;
+  phaseStartedAt: number;
+}
+
+export interface FileConflict {
+  file: string;
+  agentIds: number[];
+  detectedAt: number;
+}
+
+export interface ProjectGroup {
+  projectPath: string;
+  agentIds: number[];
+  activeFiles: Record<number, string[]>;
+  conflicts: FileConflict[];
+}
+
+export interface ActivityEvent {
+  id: string;
+  agentId: number;
+  agentName: string;
+  type: 'tool_start' | 'tool_done' | 'phase_change' | 'conflict' | 'status_change';
+  detail: string;
+  timestamp: number;
 }
 
 export interface ExtensionMessageState {
@@ -94,6 +142,11 @@ export interface ExtensionMessageState {
   totalCost: number;
   closedSessions: ClosedSession[];
   textPreviews: Record<number, { text: string; timestamp: number }>;
+  systemStats: SystemStats;
+  agentPhases: Record<number, PhaseInfo>;
+  projectGroups: ProjectGroup[];
+  fileConflicts: FileConflict[];
+  activityFeed: ActivityEvent[];
 }
 
 function saveAgentSeats(os: OfficeState): void {
@@ -148,9 +201,39 @@ export function useExtensionMessages(
   const [totalCost, setTotalCost] = useState(0);
   const [closedSessions, setClosedSessions] = useState<ClosedSession[]>([]);
   const [textPreviews, setTextPreviews] = useState<Record<number, { text: string; timestamp: number }>>({});
+  const [systemStats, setSystemStats] = useState<SystemStats>({
+    cpuPercent: 0,
+    memUsedMB: 0,
+    memTotalMB: 0,
+    memPercent: 0,
+    processes: [],
+    estimatedCapacity: 0,
+  });
+  const [agentPhases, setAgentPhases] = useState<Record<number, PhaseInfo>>({});
+  const [projectGroups, setProjectGroups] = useState<ProjectGroup[]>([]);
+  const [fileConflicts, setFileConflicts] = useState<FileConflict[]>([]);
+  const [activityFeed, setActivityFeed] = useState<ActivityEvent[]>([]);
   const closedCostRef = useRef(0);
+  const activityIdRef = useRef(0);
+  const agentInfosRef = useRef(agentInfos);
+  agentInfosRef.current = agentInfos;
 
   const layoutReadyRef = useRef(false);
+
+  const pushActivity = (agentId: number, agentName: string, type: ActivityEvent['type'], detail: string) => {
+    const event: ActivityEvent = {
+      id: `evt-${++activityIdRef.current}`,
+      agentId,
+      agentName,
+      type,
+      detail,
+      timestamp: Date.now(),
+    };
+    setActivityFeed((prev) => {
+      const next = [event, ...prev];
+      return next.length > 200 ? next.slice(0, 200) : next;
+    });
+  };
 
   useEffect(() => {
     // Initialize layout immediately (no VS Code layout loading)
@@ -182,6 +265,7 @@ export function useExtensionMessages(
           slug: string | null;
           role: string | null;
           gitBranch: string | null;
+          projectPath?: string;
           isWaiting: boolean;
           inputTokens: number;
           outputTokens: number;
@@ -202,6 +286,7 @@ export function useExtensionMessages(
             slug: a.slug,
             role: a.role,
             gitBranch: a.gitBranch,
+            projectPath: a.projectPath || '',
             inputTokens: a.inputTokens,
             outputTokens: a.outputTokens,
             cacheCreationTokens: a.cacheCreationTokens ?? 0,
@@ -256,6 +341,7 @@ export function useExtensionMessages(
       } else if (msg.type === 'agentCreated') {
         const id = msg.id as number;
         const label = msg.label as string | undefined;
+        const projectPath = (msg.projectPath as string) || '';
         setAgents((prev) => (prev.includes(id) ? prev : [...prev, id]));
         setAgentInfos((prev) => ({
           ...prev,
@@ -264,6 +350,7 @@ export function useExtensionMessages(
             slug: null,
             role: null,
             gitBranch: null,
+            projectPath,
             inputTokens: 0,
             outputTokens: 0,
             cacheCreationTokens: 0,
@@ -332,6 +419,14 @@ export function useExtensionMessages(
           next.delete(id);
           return next;
         });
+        // Clean up phase and conflict tracking
+        setAgentPhases((prev) => {
+          if (!(id in prev)) return prev;
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+        setFileConflicts((prev) => prev.filter((c) => !c.agentIds.includes(id)));
       } else if (msg.type === 'agentLabelUpdate') {
         const id = msg.id as number;
         const label = msg.label as string;
@@ -340,9 +435,12 @@ export function useExtensionMessages(
           ...prev,
           [id]: { ...prev[id], label, slug },
         }));
-        // Update character folderName
+        // Update character folderName and refresh room assignments
         const ch = os.characters.get(id);
-        if (ch) ch.folderName = label;
+        if (ch) {
+          ch.folderName = label;
+          os.refreshRoomProjects();
+        }
       } else if (msg.type === 'agentRoleUpdate') {
         const id = msg.id as number;
         const role = msg.role as string;
@@ -376,6 +474,9 @@ export function useExtensionMessages(
           next.delete(id);
           return next;
         });
+        // Activity feed entry for tool start
+        const toolInfo = agentInfosRef.current[id];
+        pushActivity(id, toolInfo?.slug || toolInfo?.label || `Agent #${id}`, 'tool_start', status);
         if (status.startsWith('Subtask:')) {
           const label = status.slice('Subtask:'.length).trim();
           const subId = os.addSubagent(id, toolId);
@@ -572,6 +673,66 @@ export function useExtensionMessages(
         const id = msg.id as number;
         const text = msg.text as string;
         setTextPreviews((prev) => ({ ...prev, [id]: { text, timestamp: Date.now() } }));
+      } else if (msg.type === 'systemStats') {
+        setSystemStats({
+          cpuPercent: msg.cpuPercent as number,
+          memUsedMB: msg.memUsedMB as number,
+          memTotalMB: msg.memTotalMB as number,
+          memPercent: msg.memPercent as number,
+          processes: (msg.processes as SystemProcessStats[]) || [],
+          estimatedCapacity: msg.estimatedCapacity as number,
+        });
+      } else if (msg.type === 'agentPhaseUpdate') {
+        const id = msg.id as number;
+        const phase = msg.phase as AgentPhase;
+        setAgentPhases((prev) => ({
+          ...prev,
+          [id]: {
+            ...prev[id],
+            phase,
+            phaseStartedAt: Date.now(),
+            filesRead: prev[id]?.filesRead ?? 0,
+            filesModified: prev[id]?.filesModified ?? 0,
+          },
+        }));
+        const phaseAgentInfo = agentInfosRef.current[id];
+        pushActivity(id, phaseAgentInfo?.slug || phaseAgentInfo?.label || `Agent #${id}`, 'phase_change', phase);
+      } else if (msg.type === 'coordination') {
+        const groups = (msg.groups as ProjectGroup[]) || [];
+        setProjectGroups(groups);
+        // Update phases from coordination data
+        const phases = msg.phases as Record<string, PhaseInfo | null> | undefined;
+        if (phases) {
+          setAgentPhases((prev) => {
+            const next = { ...prev };
+            for (const [idStr, info] of Object.entries(phases)) {
+              if (info) next[Number(idStr)] = info;
+            }
+            return next;
+          });
+        }
+      } else if (msg.type === 'fileConflict') {
+        const conflict: FileConflict = {
+          file: msg.file as string,
+          agentIds: msg.agentIds as number[],
+          detectedAt: msg.detectedAt as number,
+        };
+        setFileConflicts((prev) => {
+          // Replace existing conflict for same file or add new
+          const existing = prev.findIndex(c => c.file === conflict.file);
+          if (existing >= 0) {
+            const next = [...prev];
+            next[existing] = conflict;
+            return next;
+          }
+          return [...prev, conflict];
+        });
+        pushActivity(
+          conflict.agentIds[0],
+          'System',
+          'conflict',
+          `File conflict: ${conflict.file} (${conflict.agentIds.length} agents)`,
+        );
       }
     });
 
@@ -594,5 +755,10 @@ export function useExtensionMessages(
     totalCost,
     closedSessions,
     textPreviews,
+    systemStats,
+    agentPhases,
+    projectGroups,
+    fileConflicts,
+    activityFeed,
   };
 }

@@ -17,6 +17,14 @@ export interface SessionRecord {
   gitBranch: string | null;
 }
 
+export interface ProjectHistory {
+  projectPath: string;
+  lastSeen: number;
+  totalSessions: number;
+  totalCost: number;
+  recentFiles: string[];
+}
+
 export interface PersistenceData {
   sessions: SessionRecord[];
   dailyCosts: Record<string, number>;
@@ -27,6 +35,7 @@ export interface PersistenceData {
     notifications?: boolean;
     webhookUrl?: string;
   };
+  projectHistory: Record<string, ProjectHistory>;
 }
 
 const DATA_DIR = path.join(os.homedir(), '.agent-office');
@@ -38,6 +47,7 @@ let data: PersistenceData = {
   dailyCosts: {},
   totalSessions: 0,
   settings: {},
+  projectHistory: {},
 };
 
 let dirty = false;
@@ -60,6 +70,7 @@ export function loadPersistence(): PersistenceData {
         dailyCosts: parsed.dailyCosts ?? {},
         totalSessions: parsed.totalSessions ?? 0,
         settings: parsed.settings ?? {},
+        projectHistory: parsed.projectHistory ?? {},
       };
     }
   } catch {
@@ -107,6 +118,41 @@ export function addSession(session: SessionRecord): void {
 export function updateSettings(settings: Partial<PersistenceData['settings']>): void {
   data.settings = { ...data.settings, ...settings };
   dirty = true;
+}
+
+export function updateProjectHistory(projectPath: string, cost: number, files: string[]): void {
+  if (!projectPath) return;
+  const existing = data.projectHistory[projectPath];
+  if (existing) {
+    existing.lastSeen = Date.now();
+    existing.totalSessions++;
+    existing.totalCost += cost;
+    // Merge recent files, keep last 50
+    const fileSet = new Set([...files, ...existing.recentFiles]);
+    existing.recentFiles = [...fileSet].slice(0, 50);
+  } else {
+    data.projectHistory[projectPath] = {
+      projectPath,
+      lastSeen: Date.now(),
+      totalSessions: 1,
+      totalCost: cost,
+      recentFiles: files.slice(0, 50),
+    };
+  }
+  // Cap at 100 projects, evict oldest
+  const entries = Object.entries(data.projectHistory);
+  if (entries.length > 100) {
+    entries.sort((a, b) => a[1].lastSeen - b[1].lastSeen);
+    const toRemove = entries.slice(0, entries.length - 100);
+    for (const [key] of toRemove) {
+      delete data.projectHistory[key];
+    }
+  }
+  dirty = true;
+}
+
+export function getProjectHistory(): Record<string, ProjectHistory> {
+  return data.projectHistory;
 }
 
 export function clearHistory(): void {

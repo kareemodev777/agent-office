@@ -5,6 +5,7 @@ interface InspectPanelProps {
   agentId: number;
   agentLabel?: string;
   agentRole?: string | null;
+  agentProjectPath?: string;
   onClose: () => void;
 }
 
@@ -19,6 +20,7 @@ interface AgentMeta {
   slug: string | null;
   role: string | null;
   gitBranch: string | null;
+  projectPath: string;
   inputTokens: number;
   outputTokens: number;
   cacheCreationTokens: number;
@@ -223,7 +225,7 @@ const ROLE_COLORS: Record<string, string> = {
   documenter: '#5AC8FA',
 };
 
-export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: InspectPanelProps) {
+export function InspectPanel({ agentId, agentLabel, agentRole, agentProjectPath, onClose }: InspectPanelProps) {
   const [lines, setLines] = useState<ParsedLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [meta, setMeta] = useState<AgentMeta | null>(null);
@@ -247,6 +249,7 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
           slug: (msg.slug as string) || null,
           role: (msg.role as string) || null,
           gitBranch: (msg.gitBranch as string) || null,
+          projectPath: (msg.projectPath as string) || '',
           inputTokens: (msg.inputTokens as number) || 0,
           outputTokens: (msg.outputTokens as number) || 0,
           cacheCreationTokens: (msg.cacheCreationTokens as number) || 0,
@@ -309,6 +312,7 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
   void durationTick; // used to trigger re-render
 
   const displayLabel = meta?.slug || agentLabel || `Agent #${agentId}`;
+  const projectPath = meta?.projectPath || agentProjectPath || '';
   const projectName = agentLabel;
   const showProject = projectName && projectName !== displayLabel;
   const displayRole = meta?.role || agentRole;
@@ -345,7 +349,14 @@ export function InspectPanel({ agentId, agentLabel, agentRole, onClose }: Inspec
               <span style={{ fontSize: 'var(--text-xl)', color: 'var(--text-primary)', fontWeight: 600 }}>
                 {displayLabel}
               </span>
-              {showProject && (
+              {projectPath ? (
+                <span style={{ fontSize: 'var(--text-sm)', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                    <path d="M1.5 2.5h5l2 2h6v9h-13z" stroke="#8E8E93" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+                  </svg>
+                  {projectPath}
+                </span>
+              ) : showProject && (
                 <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
                   {projectName}
                 </span>

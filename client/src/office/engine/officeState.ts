@@ -12,6 +12,61 @@ import {
   PALETTE_COUNT,
   WAITING_BUBBLE_DURATION_SEC,
 } from '../../constants.js';
+
+// ── Room zone detection ────────────────────────────────────────
+
+export interface RoomZone {
+  minCol: number;
+  maxCol: number;
+  centerCol: number;
+}
+
+/** Detect rooms by finding wall-majority columns that divide the layout */
+function detectRoomZones(
+  tileMap: TileTypeVal[][],
+  seats: Map<string, Seat>,
+): RoomZone[] {
+  const rows = tileMap.length;
+  const cols = rows > 0 ? tileMap[0].length : 0;
+  if (cols === 0 || rows === 0) return [];
+
+  // Find divider columns (>60% wall tiles)
+  const dividers: number[] = [];
+  for (let c = 0; c < cols; c++) {
+    let wallCount = 0;
+    for (let r = 0; r < rows; r++) {
+      if (tileMap[r][c] === 0) wallCount++; // TileType.WALL = 0
+    }
+    if (wallCount / rows > 0.6) dividers.push(c);
+  }
+
+  if (dividers.length < 2) return [];
+
+  // Create zones between consecutive dividers that contain seats
+  const zones: RoomZone[] = [];
+  for (let i = 0; i < dividers.length - 1; i++) {
+    const minCol = dividers[i] + 1;
+    const maxCol = dividers[i + 1] - 1;
+    if (maxCol < minCol) continue;
+
+    let hasSeat = false;
+    for (const seat of seats.values()) {
+      if (seat.seatCol >= minCol && seat.seatCol <= maxCol) {
+        hasSeat = true;
+        break;
+      }
+    }
+    if (!hasSeat) continue;
+
+    zones.push({
+      minCol,
+      maxCol,
+      centerCol: Math.floor((minCol + maxCol) / 2),
+    });
+  }
+
+  return zones;
+}
 import { getCatalogEntry, getOnStateType } from '../layout/furnitureCatalog.js';
 import {
   createDefaultLayout,
@@ -51,6 +106,11 @@ export class OfficeState {
   subagentMeta: Map<number, { parentAgentId: number; parentToolId: string }> = new Map();
   private nextSubagentId = -1;
 
+  /** Detected room zones in the layout */
+  roomZones: RoomZone[] = [];
+  /** Room index → project label (which project owns which room) */
+  roomProjects: Map<number, string> = new Map();
+
   constructor(layout?: OfficeLayout) {
     this.layout = layout || createDefaultLayout();
     this.tileMap = layoutToTileMap(this.layout);
@@ -58,6 +118,7 @@ export class OfficeState {
     this.blockedTiles = getBlockedTiles(this.layout.furniture);
     this.furniture = layoutToFurnitureInstances(this.layout.furniture);
     this.walkableTiles = getWalkableTiles(this.tileMap, this.blockedTiles);
+    this.roomZones = detectRoomZones(this.tileMap, this.seats);
   }
 
   /** Rebuild all derived state from a new layout. Reassigns existing characters.
@@ -69,6 +130,7 @@ export class OfficeState {
     this.blockedTiles = getBlockedTiles(layout.furniture);
     this.rebuildFurnitureInstances();
     this.walkableTiles = getWalkableTiles(this.tileMap, this.blockedTiles);
+    this.roomZones = detectRoomZones(this.tileMap, this.seats);
 
     // Shift character positions when grid expands left/up
     if (shift && (shift.col !== 0 || shift.row !== 0)) {
@@ -178,6 +240,72 @@ export class OfficeState {
     return null;
   }
 
+  /** Get the room index a seat belongs to, or -1 */
+  getSeatRoom(seatId: string): number {
+    const seat = this.seats.get(seatId);
+    if (!seat) return -1;
+    for (let i = 0; i < this.roomZones.length; i++) {
+      if (seat.seatCol >= this.roomZones[i].minCol && seat.seatCol <= this.roomZones[i].maxCol) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /** Find a free seat within a specific room */
+  private findFreeSeatInRoom(roomIndex: number): string | null {
+    if (roomIndex < 0 || roomIndex >= this.roomZones.length) return null;
+    const zone = this.roomZones[roomIndex];
+    for (const [uid, seat] of this.seats) {
+      if (!seat.assigned && seat.seatCol >= zone.minCol && seat.seatCol <= zone.maxCol) {
+        return uid;
+      }
+    }
+    return null;
+  }
+
+  /** Find the room assigned to a project, or claim a free room */
+  private findOrAssignRoom(projectLabel: string): number {
+    for (const [room, project] of this.roomProjects) {
+      if (project === projectLabel) return room;
+    }
+    for (let i = 0; i < this.roomZones.length; i++) {
+      if (!this.roomProjects.has(i)) {
+        this.roomProjects.set(i, projectLabel);
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /** Re-derive room project assignments from current characters */
+  refreshRoomProjects(): void {
+    this.roomProjects.clear();
+    for (const ch of this.characters.values()) {
+      if (ch.isSubagent || !ch.folderName || !ch.seatId) continue;
+      if (ch.matrixEffect === 'despawn') continue;
+      const room = this.getSeatRoom(ch.seatId);
+      if (room >= 0 && !this.roomProjects.has(room)) {
+        this.roomProjects.set(room, ch.folderName);
+      }
+    }
+  }
+
+  /** Get room labels for rendering */
+  getRoomLabels(): Array<{ centerCol: number; label: string }> {
+    const labels: Array<{ centerCol: number; label: string }> = [];
+    for (let i = 0; i < this.roomZones.length; i++) {
+      const project = this.roomProjects.get(i);
+      if (project) {
+        labels.push({
+          centerCol: this.roomZones[i].centerCol,
+          label: project,
+        });
+      }
+    }
+    return labels;
+  }
+
   /**
    * Pick a diverse palette for a new agent based on currently active agents.
    * First 6 agents each get a unique skin (random order). Beyond 6, skins
@@ -226,7 +354,7 @@ export class OfficeState {
       hueShift = pick.hueShift;
     }
 
-    // Try preferred seat first, then any free seat
+    // Try preferred seat first, then room-based assignment, then any free seat
     let seatId: string | null = null;
     if (preferredSeatId && this.seats.has(preferredSeatId)) {
       const seat = this.seats.get(preferredSeatId)!;
@@ -234,8 +362,21 @@ export class OfficeState {
         seatId = preferredSeatId;
       }
     }
+    if (!seatId && folderName) {
+      const roomIdx = this.findOrAssignRoom(folderName);
+      if (roomIdx >= 0) {
+        seatId = this.findFreeSeatInRoom(roomIdx);
+      }
+    }
     if (!seatId) {
       seatId = this.findFreeSeat();
+    }
+    // Track room assignment for preferred seat
+    if (seatId && folderName) {
+      const roomIdx = this.getSeatRoom(seatId);
+      if (roomIdx >= 0 && !this.roomProjects.has(roomIdx)) {
+        this.roomProjects.set(roomIdx, folderName);
+      }
     }
 
     let ch: Character;
@@ -670,6 +811,10 @@ export class OfficeState {
     // Remove characters that finished despawn
     for (const id of toDelete) {
       this.characters.delete(id);
+    }
+    // Clean up room assignments when characters leave
+    if (toDelete.length > 0) {
+      this.refreshRoomProjects();
     }
   }
 
