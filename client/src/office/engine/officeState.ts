@@ -12,6 +12,7 @@ import {
   PALETTE_COUNT,
   WAITING_BUBBLE_DURATION_SEC,
 } from '../../constants.js';
+import { drawDesk } from '../draw/desk.js';
 
 // ── Room zone detection ────────────────────────────────────────
 
@@ -728,12 +729,58 @@ export class OfficeState {
     });
 
     this.furniture = layoutToFurnitureInstances(modifiedFurniture);
+    this.updateDeskDrawFns();
+  }
+
+  /** Update desk drawFns with agent tool/active state for monitor content */
+  private updateDeskDrawFns(): void {
+    // Build map: desk tile → agent tool info
+    const deskAgentInfo = new Map<string, { tool: string | null; isActive: boolean }>();
+    for (const ch of this.characters.values()) {
+      if (!ch.seatId) continue;
+      const seat = this.seats.get(ch.seatId);
+      if (!seat) continue;
+      // Find the desk tile(s) this agent faces
+      const dCol =
+        seat.facingDir === Direction.RIGHT ? 1 : seat.facingDir === Direction.LEFT ? -1 : 0;
+      const dRow = seat.facingDir === Direction.DOWN ? 1 : seat.facingDir === Direction.UP ? -1 : 0;
+      for (let d = 1; d <= 3; d++) {
+        const key = `${seat.seatCol + dCol * d},${seat.seatRow + dRow * d}`;
+        deskAgentInfo.set(key, { tool: ch.currentTool, isActive: ch.isActive });
+      }
+    }
+
+    // Update desk furniture drawFns with agent info
+    for (const f of this.furniture) {
+      if (f.type !== 'desk' || !f.drawFn) continue;
+      // Check if any desk tile has an associated agent
+      const entry = getCatalogEntry(f.type);
+      if (!entry) continue;
+      const col = f.x / TILE_SIZE;
+      const row = f.y / TILE_SIZE;
+      let agentTool: string | null = null;
+      let agentActive = false;
+      for (let dr = 0; dr < entry.footprintH; dr++) {
+        for (let dc = 0; dc < entry.footprintW; dc++) {
+          const info = deskAgentInfo.get(`${col + dc},${row + dr}`);
+          if (info) {
+            agentTool = info.tool;
+            agentActive = info.isActive;
+          }
+        }
+      }
+      // Replace drawFn with agent-aware version
+      const tool = agentTool;
+      const active = agentActive;
+      f.drawFn = (ctx, x, y, zoom) => drawDesk(ctx, x, y, zoom, tool, active);
+    }
   }
 
   setAgentTool(id: number, tool: string | null): void {
     const ch = this.characters.get(id);
     if (ch) {
       ch.currentTool = tool;
+      this.updateDeskDrawFns();
     }
   }
 
@@ -822,15 +869,71 @@ export class OfficeState {
     return Array.from(this.characters.values());
   }
 
+  /** Find the tile position of the first meeting table, or null */
+  getMeetingTablePosition(): { col: number; row: number } | null {
+    for (const f of this.layout.furniture) {
+      if (f.type === 'meeting_table') {
+        return { col: f.col, row: f.row };
+      }
+    }
+    return null;
+  }
+
+  /** Find the tile position of the first whiteboard, or null */
+  getWhiteboardPosition(): { col: number; row: number } | null {
+    for (const f of this.layout.furniture) {
+      if (f.type === 'whiteboard') {
+        return { col: f.col, row: f.row };
+      }
+    }
+    return null;
+  }
+
+  /** Find the tile position of the first coffee machine, or null */
+  getCoffeeMachinePosition(): { col: number; row: number } | null {
+    for (const f of this.layout.furniture) {
+      if (f.type === 'coffee_machine') {
+        return { col: f.col, row: f.row };
+      }
+    }
+    return null;
+  }
+
+  /** Set an agent's role (for visual appearance) */
+  setAgentRole(id: number, role: string): void {
+    const ch = this.characters.get(id);
+    if (ch) ch.role = role;
+  }
+
+  /** Set an agent's workflow phase */
+  setAgentPhase(id: number, phase: Character['phase']): void {
+    const ch = this.characters.get(id);
+    if (ch) ch.phase = phase;
+  }
+
+  /** Trigger celebrating animation on an agent */
+  triggerCelebration(id: number): void {
+    const ch = this.characters.get(id);
+    if (!ch) return;
+    ch.state = CharacterState.CELEBRATING;
+    ch.celebrateTimer = 1.5; // seconds
+    ch.frame = 0;
+    ch.frameTimer = 0;
+  }
+
   /** Get character at pixel position (for hit testing). Returns id or null. */
   getCharacterAt(worldX: number, worldY: number): number | null {
     const chars = this.getCharacters().sort((a, b) => b.y - a.y);
     for (const ch of chars) {
       // Skip characters that are despawning
       if (ch.matrixEffect === 'despawn') continue;
-      // Character sprite is 16x24, anchored bottom-center
+      // Character drawn at 24x36, anchored bottom-center
       // Apply sitting offset to match visual position
-      const sittingOffset = ch.state === CharacterState.TYPE ? CHARACTER_SITTING_OFFSET_PX : 0;
+      const isSitting =
+        ch.state === CharacterState.TYPE ||
+        ch.state === CharacterState.MEETING ||
+        ch.state === CharacterState.STUCK;
+      const sittingOffset = isSitting ? CHARACTER_SITTING_OFFSET_PX : 0;
       const anchorY = ch.y + sittingOffset;
       const left = ch.x - CHARACTER_HIT_HALF_WIDTH;
       const right = ch.x + CHARACTER_HIT_HALF_WIDTH;

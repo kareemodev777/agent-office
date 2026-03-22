@@ -11,6 +11,47 @@ import {
 import type { FurnitureCatalogEntry, SpriteData } from '../types.js';
 import { FurnitureType } from '../types.js';
 
+// ── Minimal placeholder sprites for new v6 furniture ──
+// These are used for editor palette thumbnails. Runtime rendering uses draw functions.
+
+const _ = '';
+const T = '#6B5B3A'; // table brown
+const M = '#374151'; // machine gray
+const R = '#EF4444'; // accent red
+
+/** Meeting table placeholder: 32x32 (2x2 tiles) */
+const MEETING_TABLE_SPRITE: SpriteData = (() => {
+  const rows: string[][] = [];
+  for (let r = 0; r < 32; r++) {
+    const row = new Array(32).fill(_) as string[];
+    // Simple oval table shape
+    for (let c = 0; c < 32; c++) {
+      const dx = c - 16;
+      const dy = r - 14;
+      if ((dx * dx) / (13 * 13) + (dy * dy) / (8 * 8) <= 1) {
+        row[c] = T;
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+})();
+
+/** Coffee machine placeholder: 16x16 (1x1 tile) */
+const COFFEE_MACHINE_SPRITE: SpriteData = (() => {
+  const rows: string[][] = [];
+  for (let r = 0; r < 16; r++) {
+    const row = new Array(16).fill(_) as string[];
+    if (r >= 3 && r <= 14 && r >= 3) {
+      for (let c = 4; c <= 11; c++) {
+        row[c] = r <= 6 ? M : (r <= 8 ? R : M);
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+})();
+
 export interface LoadedAssetData {
   catalog: Array<{
     id: string;
@@ -117,6 +158,25 @@ export const FURNITURE_CATALOG: CatalogEntryWithCategory[] = [
     sprite: LAMP_SPRITE,
     isDesk: false,
     category: 'decor',
+  },
+  // ── v6 additions ──
+  {
+    type: FurnitureType.MEETING_TABLE,
+    label: 'Meeting Table',
+    footprintW: 2,
+    footprintH: 2,
+    sprite: MEETING_TABLE_SPRITE,
+    isDesk: false,
+    category: 'desks',
+  },
+  {
+    type: FurnitureType.COFFEE_MACHINE,
+    label: 'Coffee Machine',
+    footprintW: 1,
+    footprintH: 1,
+    sprite: COFFEE_MACHINE_SPRITE,
+    isDesk: false,
+    category: 'misc',
   },
 ];
 
