@@ -1,4 +1,5 @@
 import {
+  CELEBRATE_DURATION_SEC,
   SEAT_REST_MAX_SEC,
   SEAT_REST_MIN_SEC,
   TYPE_FRAME_DURATION_SEC,
@@ -83,6 +84,9 @@ export function createCharacter(
     matrixEffect: null,
     matrixEffectTimer: 0,
     matrixEffectSeeds: [],
+    role: 'unknown',
+    phase: 'idle',
+    celebrateTimer: 0,
   };
 }
 
@@ -310,13 +314,70 @@ export function updateCharacter(
       }
       break;
     }
+
+    case CharacterState.MEETING: {
+      // Seated at meeting table — occasional head nod animation
+      if (ch.frameTimer >= TYPE_FRAME_DURATION_SEC * 2) {
+        ch.frameTimer -= TYPE_FRAME_DURATION_SEC * 2;
+        ch.frame = (ch.frame + 1) % 2;
+      }
+      // Return to typing when no longer in meeting phase
+      if (ch.phase !== 'planning') {
+        ch.state = ch.isActive ? CharacterState.TYPE : CharacterState.IDLE;
+        ch.frame = 0;
+        ch.frameTimer = 0;
+      }
+      break;
+    }
+
+    case CharacterState.THINKING: {
+      // Standing at whiteboard — static pose with thought bubble
+      ch.frame = 0;
+      if (ch.phase !== 'planning') {
+        ch.state = ch.isActive ? CharacterState.TYPE : CharacterState.IDLE;
+        ch.frame = 0;
+        ch.frameTimer = 0;
+      }
+      break;
+    }
+
+    case CharacterState.STUCK: {
+      // Slumped at desk with "!" — similar to typing but different animation
+      if (ch.frameTimer >= TYPE_FRAME_DURATION_SEC * 3) {
+        ch.frameTimer -= TYPE_FRAME_DURATION_SEC * 3;
+        ch.frame = (ch.frame + 1) % 2;
+      }
+      // Clear stuck state when tool changes or becomes active again
+      if (ch.currentTool || !ch.isActive) {
+        ch.state = ch.isActive ? CharacterState.TYPE : CharacterState.IDLE;
+        ch.frame = 0;
+        ch.frameTimer = 0;
+      }
+      break;
+    }
+
+    case CharacterState.CELEBRATING: {
+      // Brief arm-raise animation, then return to previous state
+      ch.celebrateTimer -= dt;
+      ch.frame = 0;
+      if (ch.celebrateTimer <= 0) {
+        ch.celebrateTimer = 0;
+        ch.state = ch.isActive ? CharacterState.TYPE : CharacterState.IDLE;
+        ch.frame = 0;
+        ch.frameTimer = 0;
+      }
+      break;
+    }
   }
 }
 
-/** Get the correct sprite frame for a character's current state and direction */
+/** Get the correct sprite frame for a character's current state and direction.
+ *  Used as fallback when draw system is not active (e.g., custom asset packs). */
 export function getCharacterSprite(ch: Character, sprites: CharacterSprites): SpriteData {
   switch (ch.state) {
     case CharacterState.TYPE:
+    case CharacterState.MEETING:
+    case CharacterState.STUCK:
       if (isReadingTool(ch.currentTool)) {
         return sprites.reading[ch.dir][ch.frame % 2];
       }
@@ -324,6 +385,8 @@ export function getCharacterSprite(ch: Character, sprites: CharacterSprites): Sp
     case CharacterState.WALK:
       return sprites.walk[ch.dir][ch.frame % 4];
     case CharacterState.IDLE:
+    case CharacterState.THINKING:
+    case CharacterState.CELEBRATING:
       return sprites.walk[ch.dir][1];
     default:
       return sprites.walk[ch.dir][1];

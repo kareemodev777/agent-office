@@ -38,8 +38,35 @@ export const CharacterState = {
   IDLE: 'idle',
   WALK: 'walk',
   TYPE: 'type',
+  MEETING: 'meeting',
+  THINKING: 'thinking',
+  STUCK: 'stuck',
+  CELEBRATING: 'celebrating',
 } as const;
 export type CharacterState = (typeof CharacterState)[keyof typeof CharacterState];
+
+/** Agent workflow phase (planning, building, reviewing, etc.) */
+export type AgentPhase = 'idle' | 'planning' | 'building' | 'reviewing' | 'testing' | 'documenting';
+
+/** State passed to draw functions for rendering */
+export interface DrawState {
+  frame: number;
+  facing: Direction;
+  isActive: boolean;
+  role: string;
+  palette: number;
+  tool: string | null;
+  phase: AgentPhase;
+  glowIntensity: number;
+}
+
+/** A visual element drawn with Canvas 2D paths */
+export interface DrawableElement {
+  draw(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number, state: DrawState): void;
+  width: number;
+  height: number;
+  zOffset: number;
+}
 
 export const Direction = {
   DOWN: 0,
@@ -72,6 +99,10 @@ export interface FurnitureInstance {
   y: number;
   /** Y value used for depth sorting (typically bottom edge) */
   zY: number;
+  /** Furniture type identifier for draw-function dispatch */
+  type?: string;
+  /** Optional Canvas 2D draw function (used instead of sprite when present) */
+  drawFn?: (ctx: CanvasRenderingContext2D, x: number, y: number, zoom: number) => void;
 }
 
 export interface ToolActivity {
@@ -91,6 +122,9 @@ export const FurnitureType = {
   CHAIR: 'chair',
   PC: 'pc',
   LAMP: 'lamp',
+  // v6 additions
+  MEETING_TABLE: 'meeting_table',
+  COFFEE_MACHINE: 'coffee_machine',
 } as const;
 export type FurnitureType = (typeof FurnitureType)[keyof typeof FurnitureType];
 
@@ -195,4 +229,10 @@ export interface Character {
   matrixEffectSeeds: number[];
   /** Workspace folder name (only set for multi-root workspaces) */
   folderName?: string;
+  /** Agent role for visual appearance (architect, builder, reviewer, tester, documenter, unknown) */
+  role: string;
+  /** Current workflow phase */
+  phase: AgentPhase;
+  /** Timer for celebrating animation (counts down to 0) */
+  celebrateTimer: number;
 }

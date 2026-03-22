@@ -20,6 +20,7 @@ import {
   GHOST_VALID_TINT,
   GRID_LINE_COLOR,
   HOVERED_OUTLINE_ALPHA,
+  MATRIX_EFFECT_DURATION_SEC,
   OUTLINE_Z_SORT_OFFSET,
   ROTATE_BUTTON_BG,
   SEAT_AVAILABLE_COLOR,
@@ -31,12 +32,13 @@ import {
   VOID_TILE_DASH_PATTERN,
   VOID_TILE_OUTLINE_COLOR,
 } from '../../constants.js';
+import { getDrawnCharacterCanvas } from '../draw/character.js';
+import { drawCharacterGlow, drawDespawnEffect, drawSpawnEffect } from '../draw/effects.js';
 import { getColorizedFloorSprite, hasFloorSprites, WALL_COLOR } from '../floorTiles.js';
-import { getCachedSprite, getOutlineSprite } from '../sprites/spriteCache.js';
+import { getCachedSprite } from '../sprites/spriteCache.js';
 import {
   BUBBLE_PERMISSION_SPRITE,
   BUBBLE_WAITING_SPRITE,
-  getCharacterSprites,
 } from '../sprites/spriteData.js';
 import type {
   Character,
@@ -48,8 +50,6 @@ import type {
 } from '../types.js';
 import { CharacterState, TILE_SIZE, TileType } from '../types.js';
 import { getWallInstances, hasWallSprites, wallColorToHex } from '../wallTiles.js';
-import { getCharacterSprite } from './characters.js';
-import { renderMatrixEffect } from './matrixEffect.js';
 
 // ── Render functions ────────────────────────────────────────────
 
@@ -104,6 +104,15 @@ interface ZDrawable {
   draw: (ctx: CanvasRenderingContext2D) => void;
 }
 
+/** Whether a character state counts as "sitting" for offset purposes */
+function isSittingState(state: CharacterState): boolean {
+  return (
+    state === CharacterState.TYPE ||
+    state === CharacterState.MEETING ||
+    state === CharacterState.STUCK
+  );
+}
+
 export function renderScene(
   ctx: CanvasRenderingContext2D,
   furniture: FurnitureInstance[],
@@ -118,65 +127,71 @@ export function renderScene(
 
   // Furniture
   for (const f of furniture) {
-    const cached = getCachedSprite(f.sprite, zoom);
-    const fx = offsetX + f.x * zoom;
-    const fy = offsetY + f.y * zoom;
-    drawables.push({
-      zY: f.zY,
-      draw: (c) => {
-        c.drawImage(cached, fx, fy);
-      },
-    });
+    if (f.drawFn) {
+      // v6 draw-function based furniture
+      const fx = offsetX + f.x * zoom;
+      const fy = offsetY + f.y * zoom;
+      const fn = f.drawFn;
+      drawables.push({
+        zY: f.zY,
+        draw: (c) => fn(c, fx, fy, zoom),
+      });
+    } else {
+      // Sprite-based furniture (legacy or custom asset packs)
+      const cached = getCachedSprite(f.sprite, zoom);
+      const fx = offsetX + f.x * zoom;
+      const fy = offsetY + f.y * zoom;
+      drawables.push({
+        zY: f.zY,
+        draw: (c) => {
+          c.drawImage(cached, fx, fy);
+        },
+      });
+    }
   }
 
-  // Characters
+  // Characters — use v6 Canvas 2D path drawing system
   for (const ch of characters) {
-    const sprites = getCharacterSprites(ch.palette, ch.hueShift);
-    const spriteData = getCharacterSprite(ch, sprites);
-    const cached = getCachedSprite(spriteData, zoom);
-    // Sitting offset: shift character down when seated so they visually sit in the chair
-    const sittingOffset = ch.state === CharacterState.TYPE ? CHARACTER_SITTING_OFFSET_PX : 0;
+    const cached = getDrawnCharacterCanvas(ch, zoom, ch.role);
+    // Sitting offset: shift character down when seated
+    const sittingOffset = isSittingState(ch.state) ? CHARACTER_SITTING_OFFSET_PX : 0;
     // Anchor at bottom-center of character — round to integer device pixels
     const drawX = Math.round(offsetX + ch.x * zoom - cached.width / 2);
     const drawY = Math.round(offsetY + (ch.y + sittingOffset) * zoom - cached.height);
 
-    // Sort characters by bottom of their tile (not center) so they render
-    // in front of same-row furniture (e.g. chairs) but behind furniture
-    // at lower rows (e.g. desks, bookshelves that occlude from below).
     const charZY = ch.y + TILE_SIZE / 2 + CHARACTER_Z_SORT_OFFSET;
 
-    // Matrix spawn/despawn effect — skip outline, use per-pixel rendering
+    // Spawn/despawn effects (replaces matrix effect for drawn characters)
     if (ch.matrixEffect) {
+      const progress = ch.matrixEffectTimer / MATRIX_EFFECT_DURATION_SEC;
       const mDrawX = drawX;
       const mDrawY = drawY;
-      const mSpriteData = spriteData;
-      const mCh = ch;
-      drawables.push({
-        zY: charZY,
-        draw: (c) => {
-          renderMatrixEffect(c, mCh, mSpriteData, mDrawX, mDrawY, zoom);
-        },
-      });
+      const mCached = cached;
+      if (ch.matrixEffect === 'spawn') {
+        drawables.push({
+          zY: charZY,
+          draw: (c) => drawSpawnEffect(c, mCached, mDrawX, mDrawY, progress),
+        });
+      } else {
+        drawables.push({
+          zY: charZY,
+          draw: (c) => drawDespawnEffect(c, mCached, mDrawX, mDrawY, progress),
+        });
+      }
       continue;
     }
 
-    // White outline: full opacity for selected, 50% for hover
+    // Selection/hover glow (replaces pixel-based outline)
     const isSelected = selectedAgentId !== null && ch.id === selectedAgentId;
     const isHovered = hoveredAgentId !== null && ch.id === hoveredAgentId;
     if (isSelected || isHovered) {
-      const outlineAlpha = isSelected ? SELECTED_OUTLINE_ALPHA : HOVERED_OUTLINE_ALPHA;
-      const outlineData = getOutlineSprite(spriteData);
-      const outlineCached = getCachedSprite(outlineData, zoom);
-      const olDrawX = drawX - zoom; // 1 sprite-pixel offset, scaled
-      const olDrawY = drawY - zoom; // outline follows sitting offset via drawY
+      const glowAlpha = isSelected ? SELECTED_OUTLINE_ALPHA : HOVERED_OUTLINE_ALPHA;
+      const glowDrawX = drawX;
+      const glowDrawY = drawY;
+      const glowCached = cached;
       drawables.push({
-        zY: charZY - OUTLINE_Z_SORT_OFFSET, // sort just before character
-        draw: (c) => {
-          c.save();
-          c.globalAlpha = outlineAlpha;
-          c.drawImage(outlineCached, olDrawX, olDrawY);
-          c.restore();
-        },
+        zY: charZY - OUTLINE_Z_SORT_OFFSET,
+        draw: (c) => drawCharacterGlow(c, glowCached, glowDrawX, glowDrawY, glowAlpha),
       });
     }
 
@@ -482,8 +497,8 @@ export function renderSubagentLines(
     if (!parent) continue;
     if (parent.matrixEffect === 'despawn') continue;
 
-    const parentSittingOff = parent.state === CharacterState.TYPE ? CHARACTER_SITTING_OFFSET_PX : 0;
-    const childSittingOff = ch.state === CharacterState.TYPE ? CHARACTER_SITTING_OFFSET_PX : 0;
+    const parentSittingOff = isSittingState(parent.state) ? CHARACTER_SITTING_OFFSET_PX : 0;
+    const childSittingOff = isSittingState(ch.state) ? CHARACTER_SITTING_OFFSET_PX : 0;
 
     const x1 = offsetX + parent.x * zoom;
     const y1 = offsetY + (parent.y + parentSittingOff) * zoom - 12 * zoom;
@@ -524,7 +539,7 @@ export function renderBubbles(
     // Position: centered above the character's head
     // Character is anchored bottom-center at (ch.x, ch.y), sprite is 16x24
     // Place bubble above head with a small gap; follow sitting offset
-    const sittingOff = ch.state === CharacterState.TYPE ? BUBBLE_SITTING_OFFSET_PX : 0;
+    const sittingOff = isSittingState(ch.state) ? BUBBLE_SITTING_OFFSET_PX : 0;
     const bubbleX = Math.round(offsetX + ch.x * zoom - cached.width / 2);
     const bubbleY = Math.round(
       offsetY + (ch.y + sittingOff - BUBBLE_VERTICAL_OFFSET_PX) * zoom - cached.height - 1 * zoom,

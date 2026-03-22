@@ -1,4 +1,6 @@
 import { getColorizedSprite } from '../colorize.js';
+import { drawDesk, drawChair } from '../draw/desk.js';
+import { drawBookshelf, drawCoffeeMachine, drawCooler, drawMeetingTable, drawPlant, drawWhiteboard } from '../draw/furniture.js';
 import type {
   FloorColor,
   FurnitureInstance,
@@ -16,6 +18,38 @@ import {
   TileType,
 } from '../types.js';
 import { getCatalogEntry } from './furnitureCatalog.js';
+
+/** Get draw function for a given furniture type, or undefined for custom assets */
+function getDrawFn(
+  type: string,
+  _col: number,
+  _row: number,
+): ((ctx: CanvasRenderingContext2D, x: number, y: number, zoom: number) => void) | undefined {
+  switch (type) {
+    case FurnitureType.DESK:
+      return (ctx, x, y, zoom) => drawDesk(ctx, x, y, zoom);
+    case FurnitureType.BOOKSHELF:
+      return (ctx, x, y, zoom) => drawBookshelf(ctx, x, y, zoom);
+    case FurnitureType.PLANT:
+      return (ctx, x, y, zoom) => drawPlant(ctx, x, y, zoom, 0);
+    case FurnitureType.COOLER:
+      return (ctx, x, y, zoom) => drawCooler(ctx, x, y, zoom);
+    case FurnitureType.WHITEBOARD:
+      return (ctx, x, y, zoom) => drawWhiteboard(ctx, x, y, zoom);
+    case FurnitureType.CHAIR:
+      // Chair draw function — direction will be overridden if orientation info is available
+      return (ctx, x, y, zoom) => drawChair(ctx, x, y, zoom, Direction.DOWN);
+    case FurnitureType.PC:
+    case FurnitureType.LAMP:
+      return undefined; // These use sprite rendering (small items, not worth custom draw)
+    case FurnitureType.MEETING_TABLE:
+      return (ctx, x, y, zoom) => drawMeetingTable(ctx, x, y, zoom);
+    case FurnitureType.COFFEE_MACHINE:
+      return (ctx, x, y, zoom) => drawCoffeeMachine(ctx, x, y, zoom);
+    default:
+      return undefined;
+  }
+}
 
 /** Convert flat tile array from layout into 2D grid */
 export function layoutToTileMap(layout: OfficeLayout): TileTypeVal[][] {
@@ -90,7 +124,8 @@ export function layoutToFurnitureInstances(furniture: PlacedFurniture[]): Furnit
       );
     }
 
-    instances.push({ sprite, x, y, zY });
+    const drawFn = getDrawFn(item.type, item.col, item.row);
+    instances.push({ sprite, x, y, zY, type: item.type, drawFn });
   }
   return instances;
 }
